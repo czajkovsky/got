@@ -2,8 +2,18 @@
 #### Stałe
 ```
 P - liczba miejsc w urzędzie
-Z - liczba złodzieji
+Z - liczba złodziei
 D - liczba domów
+```
+#### Kolejka procesów oczekujących na wejście do sekcji krytycznej
+```
+class WaitingQueue {
+  insert(timestamp, pid);
+  is_on_top(timestamp, pid);
+  is_in_top(n, timestamp, pid);
+  pop();
+  pop(timestamp, pid);
+};
 ```
 #### Wątki
 
@@ -24,13 +34,15 @@ while(true) {
   // sekcja krytyczna doboru partnera
   if(nobody_is_waiting()) {
     send(RELEASE);
+    // wyjście z sekcji krytycznej
     recv(READY);
   }
   else {
     send(RELEASE);
+    // wyjście z sekcji krytycznej
     send(READY);
   }
-  // wyjście z sekcji krytycznej
+  
   
   if(my_id < my_partner_id) {
     send(REQUEST);
@@ -90,7 +102,7 @@ while(true) {
 }
 ```
 
-##### Wąteki zwalniający dom
+##### Wątek zwalniający dom
 ```
 sleep(LONG);
 send(RELEASE); // house_PQ
