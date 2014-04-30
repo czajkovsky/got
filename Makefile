@@ -15,7 +15,7 @@ all: ${OUT_DIR} ${OUT_DIR}/main.o
 	${LD} -o ${OUT_DIR}/main ${OUT_DIR}/main.o ${LD_FLAGS}
 
 ${OUT_DIR}:
-	mkdir ${OUT_DIR}
+	mkdir -p ${OUT_DIR}
 
 ${OUT_DIR}/main.o: ${SRC_DIR}/main.cpp
 	${CXX} -o ${OUT_DIR}/main.o -c ${SRC_DIR}/main.cpp ${CXX_FLAGS}
