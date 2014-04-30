@@ -6,7 +6,7 @@ Guild of Thiefs
 
 #### Building
 ```
-mpicc *your_file_name*
+make
 ```
 
 #### Running
