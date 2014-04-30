@@ -38,6 +38,17 @@ private:
   WaitingQueue partnership_queue_;
   WaitingQueue documentation_queue_;
   WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
+
+  void (ThiefProcess::*state_)();
+
+  // TODO change names and behaviour below
+  void Insert();
+  void Wait_for_confirm();
+  void Wait_for_top();
+  void Critical_section();
+  void Release();
+
+  void Main_loop();
 };
 
 #endif  // THIEF_PROCESS_H_
