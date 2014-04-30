@@ -2,6 +2,8 @@
 #define THIEF_PROCESS_H_
 
 #include "sizes.h"
+#include "waiting_queue.h"
+#include <mpi.h>
 
 class ThiefProcess {
 public:
@@ -25,6 +27,17 @@ private:
 
   int rank_;
   Sizes sizes_;
+
+  int requests_[Sizes::MAX_NUMBER_OF_THIEVES];
+  int releases_[Sizes::MAX_NUMBER_OF_THIEVES];
+  int confirms_[Sizes::MAX_NUMBER_OF_THIEVES];
+  MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
+  MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
+  MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
+
+  WaitingQueue partnership_queue_;
+  WaitingQueue documentation_queue_;
+  WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
 };
 
 #endif  // THIEF_PROCESS_H_
