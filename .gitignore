@@ -1,3 +1,6 @@
+# Output directories
+bin/
+
 # Object files
 *.o
 *.ko
@@ -21,3 +24,7 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Temporary files
+*.swp
+*~
