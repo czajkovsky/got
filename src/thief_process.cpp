@@ -3,11 +3,17 @@
 #include <iostream>
 #include <algorithm>
 
-void ThiefProcess::Run(int size, int rank) {
-  size_ = size;
-  rank_ = rank;
+#include "sizes.h"
 
-  std::cout << "Starting ThiefProcess [size = " << size_ << ", rank = " << rank_ << "]" << std::endl;
+void ThiefProcess::Run(int rank, Sizes sizes) {
+  rank_ = rank;
+  sizes_ = sizes;
+
+  std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
+    << "[thieves = " << Get_sizes().Get_number_of_thieves()
+    << ", desks = " << Get_sizes().Get_number_of_desks()
+    << ", houses = " << Get_sizes().Get_number_of_houses()
+    << "]" << std::endl;
 
 }
 

@@ -17,10 +17,10 @@ all: ${OUT_DIR} ${OUT_DIR}/main.o ${OUT_DIR}/thief_process.o ${OUT_DIR}/waiting_
 ${OUT_DIR}:
 	mkdir -p ${OUT_DIR}
 
-${OUT_DIR}/main.o: ${SRC_DIR}/main.cpp ${SRC_DIR}/thief_process.h
+${OUT_DIR}/main.o: ${SRC_DIR}/main.cpp ${SRC_DIR}/thief_process.h ${SRC_DIR}/sizes.h
 	${CXX} -o ${OUT_DIR}/main.o -c ${SRC_DIR}/main.cpp ${CXX_FLAGS}
 
-${OUT_DIR}/thief_process.o: ${SRC_DIR}/thief_process.cpp ${SRC_DIR}/thief_process.h
+${OUT_DIR}/thief_process.o: ${SRC_DIR}/thief_process.cpp ${SRC_DIR}/thief_process.h ${SRC_DIR}/sizes.h
 	${CXX} -o ${OUT_DIR}/thief_process.o -c ${SRC_DIR}/thief_process.cpp ${CXX_FLAGS}
 
 ${OUT_DIR}/waiting_process.o: ${SRC_DIR}/waiting_process.cpp ${SRC_DIR}/waiting_process.h
