@@ -11,5 +11,5 @@ make
 
 #### Running
 ```
-mpirun -default-hostfile none -np *number_of_processes* *your_output*
+mpirun -default-hostfile none -np *number_of_processes* ./bin/main
 ```
