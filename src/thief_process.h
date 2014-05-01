@@ -29,6 +29,12 @@ private:
   Sizes sizes_;
 
   static const unsigned int MESSAGE_LENGTH = 3;
+  enum MessageFields {
+    RANK_FIELD,
+    TIMESTAMP_FIELD,
+    QUEUE_FIELD
+  };
+
   static const unsigned int PARTNERSHIP_Q_ID = 0;
   static const unsigned int DOCUMENTATION_Q_ID = 1;
 

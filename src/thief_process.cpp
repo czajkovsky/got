@@ -51,18 +51,18 @@ void ThiefProcess::Try_communication() {
 
       // TODO remove magic numbers
 
-      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
-        partnership_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
-      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+      if (requests_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
+        partnership_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+      } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
+        documentation_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
       else {
-        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
-        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+        int house_id = requests_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
+        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
 
-      requests_[i][1] = current_timestamp;
-      MPI::COMM_WORLD.Send(requests_[i], MESSAGE_LENGTH, MPI_INT, requests_[i][0], CONFIRM_TAG);
+      requests_[i][TIMESTAMP_FIELD] = current_timestamp;
+      MPI::COMM_WORLD.Send(requests_[i], MESSAGE_LENGTH, MPI_INT, requests_[i][RANK_FIELD], CONFIRM_TAG);
 
       request_requests_[i] = MPI::COMM_WORLD.Irecv(requests_[i], MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
     }
@@ -72,13 +72,13 @@ void ThiefProcess::Try_communication() {
     if (release_requests_[i].Test()) {
       Increment_timestamp();
 
-      if (releases_[i][0] == PARTNERSHIP_Q_ID) {
+      if (releases_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Pop();
-      } else if (releases_[i][0] == DOCUMENTATION_Q_ID) {
+      } else if (releases_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Pop();
       }
       else {
-        int house_id = releases_[i][0] - PARTNERSHIP_Q_ID;
+        int house_id = releases_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
         houses_queue_[house_id].Pop();
       }
 
