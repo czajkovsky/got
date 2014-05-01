@@ -9,6 +9,15 @@ WaitingProcess WaitingQueue::Insert(const WaitingProcess& wp) {
   return wp;
 }
 
+unsigned int WaitingQueue::Position_of(const WaitingProcess& wp) {
+  std::set<WaitingProcess>::iterator found = collection_.find(wp);
+  if (found != collection_.end()) {
+    return static_cast<unsigned int>(std::distance(collection_.begin(), found)) + 1;
+  } else {
+    return 0;
+  } 
+}
+
 bool WaitingQueue::Is_on_top(const WaitingProcess& wp) const {
   if (collection_.empty()) {
     return false;
