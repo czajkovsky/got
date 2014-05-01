@@ -29,6 +29,8 @@ private:
   Sizes sizes_;
 
   static const unsigned int MESSAGE_LENGTH = 3;
+  static const unsigned int PARTNERSHIP_Q_ID = 0;
+  static const unsigned int DOCUMENTATION_Q_ID = 1;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
