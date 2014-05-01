@@ -28,11 +28,12 @@ private:
   unsigned int rank_;
   Sizes sizes_;
 
-  static const unsigned int MESSAGE_LENGTH = 3;
+  static const unsigned int MESSAGE_LENGTH = 4;
   enum MessageFields {
     RANK_FIELD,
     TIMESTAMP_FIELD,
-    QUEUE_FIELD
+    QUEUE_FIELD,
+    ENTRY_FIELD
   };
 
   static const unsigned int PARTNERSHIP_Q_ID = 0;
@@ -46,6 +47,7 @@ private:
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request partner_request_;
+  MPI::Request docs_request_;
 
   WaitingQueue partnership_queue_;
   WaitingQueue documentation_queue_;
@@ -57,7 +59,8 @@ private:
     REQUEST_TAG,
     CONFIRM_TAG,
     RELEASE_TAG,
-    PARTNER_TAG
+    PARTNER_TAG,
+    DOCS_TAG
   };
 
   void (ThiefProcess::*state_)();
@@ -69,7 +72,15 @@ private:
   void Partnership_critical_section();
   void Partnership_release();
   void Partnership_wait_for_partner();
-  void Partnership_notify_partner();
+
+  void Docs_request_entry();
+  void Docs_wait_for_confirm();
+  void Docs_wait_for_top();
+  void Docs_critical_section();
+  void Docs_release();
+
+  void Docs_wait_for_partner();
+  void Docs_start_waiting_for_partner();
 
   int waiting_for_partner_rank_;
   int current_partner_rank_;

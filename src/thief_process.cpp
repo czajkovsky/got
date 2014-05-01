@@ -82,7 +82,9 @@ void ThiefProcess::Try_communication() {
           waiting_for_partner_rank_ = -1;
         }
       } else if (releases_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Pop();
+        documentation_queue_.Erase(
+          WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD])
+        );
       }
       else {
         int house_id = releases_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
@@ -96,6 +98,7 @@ void ThiefProcess::Try_communication() {
 
 void ThiefProcess::Try_release_resources() {
   // TODO release houses etc...
+  //af as
 }
 
 void ThiefProcess::Partnership_insert() {
@@ -162,7 +165,7 @@ void ThiefProcess::Partnership_release() {
     waiting_for_partner_rank_ = -1;
 
     std::cout << "[b] rank = " << Get_rank() <<", partner = " << current_partner_rank_ << std::endl;
-    state_ = &ThiefProcess::Partnership_insert;
+    state_ = &ThiefProcess::Docs_start_waiting_for_partner;
   }
 
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
@@ -184,6 +187,91 @@ void ThiefProcess::Partnership_wait_for_partner() {
   if (partner_request_.Test()) {
     current_partner_rank_ = partner_[RANK_FIELD];
     std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+    state_ = &ThiefProcess::Docs_request_entry;
+  }
+}
+
+void ThiefProcess::Docs_request_entry() {
+  entry_timestamp_ = Increment_timestamp();
+
+  int msg[MESSAGE_LENGTH];
+  msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+  msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+  msg[QUEUE_FIELD]      = DOCUMENTATION_Q_ID;
+
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
+  }
+
+  documentation_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
+
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirms_[i], MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
+  }
+
+  state_ = &ThiefProcess::Docs_wait_for_confirm;
+}
+
+void ThiefProcess::Docs_wait_for_confirm() {
+  bool confirmed = true;
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    if (!confirm_requests_[i].Test()) {
+      confirmed = false;
+    }
+  }
+  if (confirmed) {
+    state_ = &ThiefProcess::Docs_wait_for_top;
+  }
+}
+
+void ThiefProcess::Docs_wait_for_top() {
+  int max_in_room = Get_sizes().Get_number_of_desks() / 2;
+  if (documentation_queue_.Is_in_top(max_in_room, WaitingProcess(entry_timestamp_, Get_rank()))) {
+    state_ = &ThiefProcess::Docs_critical_section;
+  }
+}
+
+void ThiefProcess::Docs_critical_section() {
+  std::cout << "[" << Get_rank() << "] " "is filling the docs (critical section)" << std::endl;
+  state_ = &ThiefProcess::Docs_release;
+}
+
+void ThiefProcess::Docs_release() {
+
+  int msg[MESSAGE_LENGTH];
+  MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, DOCS_TAG);
+  state_ = &ThiefProcess::Partnership_insert;
+
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    Increment_timestamp();
+
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+    msg[QUEUE_FIELD]      = DOCUMENTATION_Q_ID;
+    msg[ENTRY_FIELD]      = entry_timestamp_;
+
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
+  }
+
+  documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
+}
+
+void ThiefProcess::Docs_start_waiting_for_partner() {
+  std::cout << "[" << Get_rank()<< "] has started waiting for the docs" << std::endl;
+  int msg[MESSAGE_LENGTH];
+  docs_request_ = MPI::COMM_WORLD.Irecv(msg, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, DOCS_TAG);
+  state_ = &ThiefProcess::Docs_wait_for_partner;
+}
+
+void ThiefProcess::Docs_wait_for_partner() {
+  if (docs_request_.Test()) {
+    std::cout << "[" << Get_rank()<< "] "
+    << current_partner_rank_ << " - has filled the docs" << std::endl;
     state_ = &ThiefProcess::Partnership_insert;
   }
 }

@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
   MPI::Init(argc, argv);
 
   const unsigned int number_of_thieves = MPI::COMM_WORLD.Get_size();
-  const unsigned int number_of_desks = 1;
+  const unsigned int number_of_desks = 2;
   const unsigned int number_of_houses = 2;
 
   ThiefProcess::Get_process().Run(
