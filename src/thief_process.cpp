@@ -49,12 +49,21 @@ void ThiefProcess::Try_communication() {
     if (request_requests_[i].Test()) {
       unsigned int current_timestamp = Increment_timestamp();
 
-      // TODO decide which queue
       // TODO remove magic numbers
-      partnership_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+
+      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
+        partnership_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
+        documentation_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+      }
+      else {
+        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
+        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+      }
+
       requests_[i][1] = current_timestamp;
       MPI::COMM_WORLD.Send(requests_[i], MESSAGE_LENGTH, MPI_INT, requests_[i][0], CONFIRM_TAG);
-      
+
       request_requests_[i] = MPI::COMM_WORLD.Irecv(requests_[i], MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
     }
   }
@@ -62,9 +71,16 @@ void ThiefProcess::Try_communication() {
     if (i == Get_rank()) continue;
     if (release_requests_[i].Test()) {
       Increment_timestamp();
-      
-      // TODO decide which queue
-      partnership_queue_.Pop();
+
+      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
+        partnership_queue_.Pop();
+      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
+        documentation_queue_.Pop();
+      }
+      else {
+        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
+        houses_queue_[house_id].Pop();
+      }
 
       release_requests_[i] = MPI::COMM_WORLD.Irecv(releases_[i], MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
     }
