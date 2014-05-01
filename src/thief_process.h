@@ -39,6 +39,12 @@ private:
   WaitingQueue documentation_queue_;
   WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
 
+  enum CommunicationTAG {
+    REQUEST_TAG,
+    CONFIRM_TAG,
+    RELEASE_TAG
+  };
+
   void (ThiefProcess::*state_)();
 
   // TODO change names and behaviour below
@@ -48,7 +54,10 @@ private:
   void Critical_section();
   void Release();
 
+  void Set_up_communication();
   void Main_loop();
+  void Try_communication();
+  void Try_release();
 };
 
 #endif  // THIEF_PROCESS_H_

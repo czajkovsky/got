@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <mpi.h>
 
 #include "sizes.h"
 
@@ -17,18 +18,27 @@ void ThiefProcess::Run(int rank, Sizes sizes) {
     << ", houses = " << Get_sizes().Get_number_of_houses()
     << "]" << std::endl;
 
-  // TODO prepare communication before Main_loop
+  Set_up_communication();
   Main_loop();
+}
+
+void ThiefProcess::Set_up_communication() {
 }
 
 void ThiefProcess::Main_loop() {
   // TODO create loop
   // while (true)
   {
-    // TODO try communication here
+    Try_communication();
     (this->*state_)();
-    // TODO try other things here
+    Try_release();
   }
+}
+
+void ThiefProcess::Try_communication() {
+}
+
+void ThiefProcess::Try_release() {
 }
 
 void ThiefProcess::Insert() {
