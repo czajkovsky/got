@@ -93,8 +93,12 @@ void ThiefProcess::Try_release_resources() {
 
 void ThiefProcess::Partnership_insert() {
   entry_timestamp_ = Increment_timestamp();
-  // TODO remove magic numbers
-  int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+
+  int msg[MESSAGE_LENGTH];
+  msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+  msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+  msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
+
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
