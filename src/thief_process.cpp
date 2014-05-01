@@ -14,6 +14,8 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
 
   state_ = &ThiefProcess::Partnership_insert;
 
+  waiting_for_partner_rank_ = -1;
+
   std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
     << "[thieves = " << Get_sizes().Get_number_of_thieves()
     << ", desks = " << Get_sizes().Get_number_of_desks()
