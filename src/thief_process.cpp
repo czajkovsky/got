@@ -72,13 +72,13 @@ void ThiefProcess::Try_communication() {
     if (release_requests_[i].Test()) {
       Increment_timestamp();
 
-      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
+      if (releases_[i][0] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Pop();
-      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
+      } else if (releases_[i][0] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Pop();
       }
       else {
-        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
+        int house_id = releases_[i][0] - PARTNERSHIP_Q_ID;
         houses_queue_[house_id].Pop();
       }
 
