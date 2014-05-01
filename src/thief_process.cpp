@@ -77,11 +77,11 @@ void ThiefProcess::Try_communication() {
       if (releases_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Pop();
         if (waiting_for_partner_rank_ == -1) {
-          waiting_for_partner_rank_ = requests_[i][0];
+          waiting_for_partner_rank_ = releases_[i][RANK_FIELD];
         } else {
           waiting_for_partner_rank_ = -1;
         }
-      } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
+      } else if (releases_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Pop();
       }
       else {
@@ -147,16 +147,18 @@ void ThiefProcess::Partnership_critical_section() {
 }
 
 void ThiefProcess::Partnership_release() {
-  if (waiting_for_partner_rank_ == -1) {
+  if (waiting_for_partner_rank_ == -1 || waiting_for_partner_rank_ == Get_rank()) {
     waiting_for_partner_rank_ = Get_rank();
+    Increment_timestamp();
     partner_request_ = MPI::COMM_WORLD.Irecv(&partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
     state_ = &ThiefProcess::Partnership_wait_for_partner;
   } else {
+    unsigned int current_timestamp = Increment_timestamp();
     int msg[MESSAGE_LENGTH];
     msg[RANK_FIELD]       = static_cast<int>(Get_rank());
-    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
-    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, waiting_for_partner_rank_, PARTNER_TAG);
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
     current_partner_rank_ = waiting_for_partner_rank_;
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
     waiting_for_partner_rank_ = -1;
 
     std::cout << "[b] rank = " << Get_rank() <<", partner = " << current_partner_rank_ << std::endl;
