@@ -52,11 +52,13 @@ private:
   void (ThiefProcess::*state_)();
 
   // TODO change names and behaviour below
-  void Insert();
-  void Wait_for_confirm();
-  void Wait_for_top();
-  void Critical_section();
-  void Release();
+  void Partnership_insert();
+  void Partnership_wait_for_confirm();
+  void Partnership_wait_for_top();
+  void Partnership_critical_section();
+  void Partnership_release();
+  void Partnership_wait_for_partner();
+  void Partnership_notify_partner();
 
   void Set_up_communication();
   void Main_loop();

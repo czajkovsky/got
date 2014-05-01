@@ -12,7 +12,7 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   rank_ = rank;
   sizes_ = sizes;
 
-  state_ = &ThiefProcess::Insert;
+  state_ = &ThiefProcess::Partnership_insert;
 
   std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
     << "[thieves = " << Get_sizes().Get_number_of_thieves()
@@ -75,7 +75,7 @@ void ThiefProcess::Try_release_resources() {
   // TODO release houses etc...
 }
 
-void ThiefProcess::Insert() {
+void ThiefProcess::Partnership_insert() {
   entry_timestamp_ = Increment_timestamp();
   // TODO remove magic numbers
   int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
@@ -91,10 +91,10 @@ void ThiefProcess::Insert() {
     confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirms_[i], MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
   }
 
-  state_ = &ThiefProcess::Wait_for_confirm;
+  state_ = &ThiefProcess::Partnership_wait_for_confirm;
 }
 
-void ThiefProcess::Wait_for_confirm() {
+void ThiefProcess::Partnership_wait_for_confirm() {
   bool confirmed = true;
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
@@ -103,23 +103,23 @@ void ThiefProcess::Wait_for_confirm() {
     }
   }
   if (confirmed) {
-    state_ = &ThiefProcess::Wait_for_top;
+    state_ = &ThiefProcess::Partnership_wait_for_top;
   }
 }
 
-void ThiefProcess::Wait_for_top() {
+void ThiefProcess::Partnership_wait_for_top() {
   if (partnership_queue_.Is_on_top(WaitingProcess(entry_timestamp_, Get_rank()))) {
-    state_ = &ThiefProcess::Critical_section;
+    state_ = &ThiefProcess::Partnership_critical_section;
   }
 }
 
-void ThiefProcess::Critical_section() {
+void ThiefProcess::Partnership_critical_section() {
   std::cout << "[" << Get_rank() << "] " "critical section" << std::endl;
 
-  state_ = &ThiefProcess::Release;
+  state_ = &ThiefProcess::Partnership_release;
 }
 
-void ThiefProcess::Release() {
+void ThiefProcess::Partnership_release() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     Increment_timestamp();
@@ -129,7 +129,13 @@ void ThiefProcess::Release() {
 
   partnership_queue_.Pop();
 
-  state_ = &ThiefProcess::Insert;
+  state_ = &ThiefProcess::Partnership_insert;
+}
+
+void Partnership_wait_for_partner() {
+}
+
+void Partnership_notify_partner() {
 }
 
 unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
