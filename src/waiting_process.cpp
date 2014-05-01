@@ -8,7 +8,7 @@ WaitingProcess::WaitingProcess(unsigned int timestamp, int rank)
   : timestamp_(timestamp), rank_(rank) {
 }
 
-WaitingProcess::WaitingProcess(const WaitingProcess& wp) 
+WaitingProcess::WaitingProcess(const WaitingProcess& wp)
   : timestamp_(wp.timestamp_), rank_(wp.rank_) {
 }
 

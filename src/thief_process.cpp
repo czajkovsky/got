@@ -12,8 +12,6 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   rank_ = rank;
   sizes_ = sizes;
 
-  waiting_for_partner_rank_ = -1;
-
   state_ = &ThiefProcess::Partnership_insert;
 
   std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
@@ -53,18 +51,18 @@ void ThiefProcess::Try_communication() {
 
       // TODO remove magic numbers
 
-      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
-        partnership_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
-      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+      if (requests_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
+        partnership_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+      } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
+        documentation_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
       else {
-        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
-        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][1], requests_[i][0]));
+        int house_id = requests_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
+        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
 
-      requests_[i][1] = current_timestamp;
-      MPI::COMM_WORLD.Send(requests_[i], MESSAGE_LENGTH, MPI_INT, requests_[i][0], CONFIRM_TAG);
+      requests_[i][TIMESTAMP_FIELD] = current_timestamp;
+      MPI::COMM_WORLD.Send(requests_[i], MESSAGE_LENGTH, MPI_INT, requests_[i][RANK_FIELD], CONFIRM_TAG);
 
       request_requests_[i] = MPI::COMM_WORLD.Irecv(requests_[i], MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
     }
@@ -74,18 +72,18 @@ void ThiefProcess::Try_communication() {
     if (release_requests_[i].Test()) {
       Increment_timestamp();
 
-      if (requests_[i][0] == PARTNERSHIP_Q_ID) {
+      if (releases_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Pop();
         if (waiting_for_partner_rank_ == -1) {
           waiting_for_partner_rank_ = requests_[i][0];
         } else {
           waiting_for_partner_rank_ = -1;
         }
-      } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
+      } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Pop();
       }
       else {
-        int house_id = requests_[i][0] - PARTNERSHIP_Q_ID;
+        int house_id = releases_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
         houses_queue_[house_id].Pop();
       }
 
@@ -100,8 +98,12 @@ void ThiefProcess::Try_release_resources() {
 
 void ThiefProcess::Partnership_insert() {
   entry_timestamp_ = Increment_timestamp();
-  // TODO remove magic numbers
-  int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+
+  int msg[MESSAGE_LENGTH];
+  msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+  msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+  msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
+
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
@@ -148,7 +150,9 @@ void ThiefProcess::Partnership_release() {
     partner_request_ = MPI::COMM_WORLD.Irecv(&partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
     state_ = &ThiefProcess::Partnership_wait_for_partner;
   } else {
-    int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, waiting_for_partner_rank_, PARTNER_TAG);
     current_partner_rank_ = waiting_for_partner_rank_;
     waiting_for_partner_rank_ = -1;
@@ -160,7 +164,12 @@ void ThiefProcess::Partnership_release() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     Increment_timestamp();
-    int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+    msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
+
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
   }
 
@@ -169,8 +178,9 @@ void ThiefProcess::Partnership_release() {
 
 void ThiefProcess::Partnership_wait_for_partner() {
   if (partner_request_.Test()) {
-    current_partner_rank_ = partner_[0];
+    current_partner_rank_ = partner_[RANK_FIELD];
     std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+    state_ = &ThiefProcess::Partnership_insert;
   }
 }
 
