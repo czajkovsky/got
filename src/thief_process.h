@@ -11,11 +11,11 @@ public:
     static ThiefProcess process;
     return process;
   }
-  void Run(int rank, Sizes sizes);
+  void Run(unsigned int rank, Sizes sizes);
 
   unsigned int Increment_timestamp(unsigned int other_timestamp = 0);
 
-  int Get_rank() const { return rank_; }
+  unsigned int Get_rank() const { return rank_; }
   Sizes Get_sizes() const { return sizes_; }
 
 private:
@@ -25,12 +25,14 @@ private:
 
   unsigned int timestamp_;
 
-  int rank_;
+  unsigned int rank_;
   Sizes sizes_;
 
-  int requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  int releases_[Sizes::MAX_NUMBER_OF_THIEVES];
-  int confirms_[Sizes::MAX_NUMBER_OF_THIEVES];
+  static const unsigned int MESSAGE_LENGTH = 3;
+
+  int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
+  int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
+  int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
@@ -38,6 +40,8 @@ private:
   WaitingQueue partnership_queue_;
   WaitingQueue documentation_queue_;
   WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
+
+  unsigned int entry_timestamp_;
 
   enum CommunicationTAG {
     REQUEST_TAG,
