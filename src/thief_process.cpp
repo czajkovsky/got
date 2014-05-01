@@ -5,12 +5,14 @@
 #include <cstdlib>
 #include <mpi.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "sizes.h"
 
 void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   rank_ = rank;
   sizes_ = sizes;
+  sleep_start_ = time_t(-1);
 
   state_ = &ThiefProcess::Partnership_insert;
 
@@ -98,7 +100,6 @@ void ThiefProcess::Try_communication() {
 
 void ThiefProcess::Try_release_resources() {
   // TODO release houses etc...
-  //af as
 }
 
 void ThiefProcess::Partnership_insert() {
@@ -235,8 +236,17 @@ void ThiefProcess::Docs_wait_for_top() {
 }
 
 void ThiefProcess::Docs_critical_section() {
-  std::cout << "[" << Get_rank() << "] " "is filling the docs (critical section)" << std::endl;
-  state_ = &ThiefProcess::Docs_release;
+  if (sleep_start_ == time_t(-1)) {
+    time(&sleep_start_);
+    std::cout << "[" << Get_rank() << "] " "has started filling the docs (critical section)" << std::endl;
+  } else {
+    time_t now;
+    time(&now);
+    if (difftime(now, sleep_start_) > PAPERWORK_DURATION) {
+      std::cout << "[" << Get_rank() << "] " "has finished filling the docs" << std::endl;
+      state_ = &ThiefProcess::Docs_release;
+    }
+  }
 }
 
 void ThiefProcess::Docs_release() {

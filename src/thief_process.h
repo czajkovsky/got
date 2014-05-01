@@ -24,6 +24,7 @@ private:
   ThiefProcess& operator=(const ThiefProcess&);
 
   unsigned int timestamp_;
+  time_t sleep_start_;
 
   unsigned int rank_;
   Sizes sizes_;
@@ -38,6 +39,8 @@ private:
 
   static const unsigned int PARTNERSHIP_Q_ID = 0;
   static const unsigned int DOCUMENTATION_Q_ID = 1;
+
+  static const unsigned int PAPERWORK_DURATION = 10;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];

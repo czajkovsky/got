@@ -38,9 +38,9 @@ public:
   unsigned int Get_number_of_desks() { return number_of_desks_; }
   unsigned int Get_number_of_houses() { return number_of_houses_; }
 
-  static const unsigned int MAX_NUMBER_OF_THIEVES = 5;
-  static const unsigned int MAX_NUMBER_OF_DESKS = 5;
-  static const unsigned int MAX_NUMBER_OF_HOUSES = 5;
+  static const unsigned int MAX_NUMBER_OF_THIEVES = 10;
+  static const unsigned int MAX_NUMBER_OF_DESKS = 100;
+  static const unsigned int MAX_NUMBER_OF_HOUSES = 100;
 
 private:
   unsigned int number_of_thieves_;
