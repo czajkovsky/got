@@ -12,6 +12,8 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   rank_ = rank;
   sizes_ = sizes;
 
+  waiting_for_partner_rank_ = -1;
+
   state_ = &ThiefProcess::Partnership_insert;
 
   std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
@@ -74,6 +76,11 @@ void ThiefProcess::Try_communication() {
 
       if (requests_[i][0] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Pop();
+        if (waiting_for_partner_rank_ == -1) {
+          waiting_for_partner_rank_ = requests_[i][0];
+        } else {
+          waiting_for_partner_rank_ = -1;
+        }
       } else if (requests_[i][0] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Pop();
       }
@@ -130,12 +137,26 @@ void ThiefProcess::Partnership_wait_for_top() {
 }
 
 void ThiefProcess::Partnership_critical_section() {
-  std::cout << "[" << Get_rank() << "] " "critical section" << std::endl;
+  std::cout << "[" << Get_rank() << "] " "partnership critical section" << std::endl;
 
   state_ = &ThiefProcess::Partnership_release;
 }
 
 void ThiefProcess::Partnership_release() {
+  if (waiting_for_partner_rank_ == -1) {
+    waiting_for_partner_rank_ = Get_rank();
+    partner_request_ = MPI::COMM_WORLD.Irecv(&partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
+    state_ = &ThiefProcess::Partnership_wait_for_partner;
+  } else {
+    int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, waiting_for_partner_rank_, PARTNER_TAG);
+    current_partner_rank_ = waiting_for_partner_rank_;
+    waiting_for_partner_rank_ = -1;
+
+    std::cout << "[b] rank = " << Get_rank() <<", partner = " << current_partner_rank_ << std::endl;
+    state_ = &ThiefProcess::Partnership_insert;
+  }
+
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     Increment_timestamp();
@@ -144,14 +165,13 @@ void ThiefProcess::Partnership_release() {
   }
 
   partnership_queue_.Pop();
-
-  state_ = &ThiefProcess::Partnership_insert;
 }
 
-void Partnership_wait_for_partner() {
-}
-
-void Partnership_notify_partner() {
+void ThiefProcess::Partnership_wait_for_partner() {
+  if (partner_request_.Test()) {
+    current_partner_rank_ = partner_[0];
+    std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+  }
 }
 
 unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {

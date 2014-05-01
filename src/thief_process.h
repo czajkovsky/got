@@ -35,9 +35,11 @@ private:
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
+  int partner_[MESSAGE_LENGTH];
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
+  MPI::Request partner_request_;
 
   WaitingQueue partnership_queue_;
   WaitingQueue documentation_queue_;
@@ -48,7 +50,8 @@ private:
   enum CommunicationTAG {
     REQUEST_TAG,
     CONFIRM_TAG,
-    RELEASE_TAG
+    RELEASE_TAG,
+    PARTNER_TAG
   };
 
   void (ThiefProcess::*state_)();
@@ -61,6 +64,9 @@ private:
   void Partnership_release();
   void Partnership_wait_for_partner();
   void Partnership_notify_partner();
+
+  int waiting_for_partner_rank_;
+  int current_partner_rank_;
 
   void Set_up_communication();
   void Main_loop();
