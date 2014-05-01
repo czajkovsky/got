@@ -139,7 +139,12 @@ void ThiefProcess::Partnership_release() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     Increment_timestamp();
-    int msg[MESSAGE_LENGTH] = { static_cast<int>(Get_rank()), static_cast<int>(entry_timestamp_) };
+
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
+    msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
+
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
   }
 
