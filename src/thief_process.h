@@ -61,7 +61,7 @@ private:
   void Set_up_communication();
   void Main_loop();
   void Try_communication();
-  void Try_release();
+  void Try_release_resources();
 };
 
 #endif  // THIEF_PROCESS_H_

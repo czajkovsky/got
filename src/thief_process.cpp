@@ -37,7 +37,7 @@ void ThiefProcess::Main_loop() {
   {
     Try_communication();
     (this->*state_)();
-    Try_release();
+    Try_release_resources();
 
     usleep(100000);  // TODO remove it later
   }
@@ -71,7 +71,7 @@ void ThiefProcess::Try_communication() {
   }
 }
 
-void ThiefProcess::Try_release() {
+void ThiefProcess::Try_release_resources() {
   // TODO release houses etc...
 }
 
