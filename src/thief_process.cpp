@@ -16,8 +16,6 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
 
   state_ = &ThiefProcess::Partnership_insert;
 
-  waiting_for_partner_rank_ = -1;
-
   std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
     << "[thieves = " << Get_sizes().Get_number_of_thieves()
     << ", desks = " << Get_sizes().Get_number_of_desks()
@@ -51,12 +49,11 @@ void ThiefProcess::Try_communication() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++)  {
     if (i == Get_rank()) continue;
     if (request_requests_[i].Test()) {
-      unsigned int current_timestamp = Increment_timestamp();
-
-      // TODO remove magic numbers
+      unsigned int current_timestamp = Increment_timestamp(requests_[i][TIMESTAMP_FIELD]);
 
       if (requests_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+        // std::cout << "[" << Get_rank() << "] " "request from " << requests_[i][RANK_FIELD] << std::endl;
       } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
@@ -74,15 +71,15 @@ void ThiefProcess::Try_communication() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     if (release_requests_[i].Test()) {
-      Increment_timestamp();
+      Increment_timestamp(releases_[i][TIMESTAMP_FIELD]);
 
       if (releases_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
-        partnership_queue_.Pop();
-        if (waiting_for_partner_rank_ == -1) {
-          waiting_for_partner_rank_ = releases_[i][RANK_FIELD];
-        } else {
-          waiting_for_partner_rank_ = -1;
-        }
+        partnership_queue_.Erase(
+          partnership_queue_.Before(WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD]))
+        );
+        partnership_queue_.Erase(
+          WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD])
+        );
       } else if (releases_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Erase(
           WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD])
@@ -134,25 +131,24 @@ void ThiefProcess::Partnership_wait_for_confirm() {
     }
   }
   if (confirmed) {
+    // std::cout << "[" << Get_rank() << "] " "confirmed" << std::endl;
     state_ = &ThiefProcess::Partnership_wait_for_top;
   }
 }
 
 void ThiefProcess::Partnership_wait_for_top() {
-  if (partnership_queue_.Is_on_top(WaitingProcess(entry_timestamp_, Get_rank()))) {
+  // std::cout << "printing" << std::endl;
+  // partnership_queue_.Print();
+  if (partnership_queue_.Is_in_top(Get_sizes().Get_number_of_thieves(), WaitingProcess(entry_timestamp_, Get_rank()))) {
     state_ = &ThiefProcess::Partnership_critical_section;
   }
 }
 
 void ThiefProcess::Partnership_critical_section() {
   std::cout << "[" << Get_rank() << "] " "partnership critical section" << std::endl;
+  partnership_queue_.Print();
 
-  state_ = &ThiefProcess::Partnership_release;
-}
-
-void ThiefProcess::Partnership_release() {
-  if (waiting_for_partner_rank_ == -1 || waiting_for_partner_rank_ == Get_rank()) {
-    waiting_for_partner_rank_ = Get_rank();
+  if (partnership_queue_.Position_of(WaitingProcess(entry_timestamp_, Get_rank())) % 2 == 1) {
     Increment_timestamp();
     partner_request_ = MPI::COMM_WORLD.Irecv(&partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
     state_ = &ThiefProcess::Partnership_wait_for_partner;
@@ -161,27 +157,13 @@ void ThiefProcess::Partnership_release() {
     int msg[MESSAGE_LENGTH];
     msg[RANK_FIELD]       = static_cast<int>(Get_rank());
     msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
-    current_partner_rank_ = waiting_for_partner_rank_;
+    current_partner_rank_ = partnership_queue_.Before(WaitingProcess(entry_timestamp_, Get_rank())).Get_rank();
+
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
-    waiting_for_partner_rank_ = -1;
 
-    std::cout << "[b] rank = " << Get_rank() <<", partner = " << current_partner_rank_ << std::endl;
-    state_ = &ThiefProcess::Docs_start_waiting_for_partner;
+    std::cout << "[b] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+    state_ = &ThiefProcess::Partnership_release;
   }
-
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    Increment_timestamp();
-
-    int msg[MESSAGE_LENGTH];
-    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
-    msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
-    msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
-
-    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
-  }
-
-  partnership_queue_.Pop();
 }
 
 void ThiefProcess::Partnership_wait_for_partner() {
@@ -190,6 +172,32 @@ void ThiefProcess::Partnership_wait_for_partner() {
     std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
     state_ = &ThiefProcess::Docs_request_entry;
   }
+}
+
+void ThiefProcess::Partnership_release() {
+  assert(static_cast<int>(Get_rank()) != current_partner_rank_);
+  assert(current_partner_rank_ != -1);
+
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    unsigned int current_timestamp = Increment_timestamp();
+
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
+    msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
+    msg[ENTRY_FIELD]      = entry_timestamp_;
+
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
+  }
+  state_ = &ThiefProcess::Docs_start_waiting_for_partner;
+
+  partnership_queue_.Erase(
+    partnership_queue_.Before(WaitingProcess(entry_timestamp_, Get_rank()))
+  );
+  partnership_queue_.Erase(
+    WaitingProcess(entry_timestamp_, Get_rank())
+  );
 }
 
 void ThiefProcess::Docs_request_entry() {

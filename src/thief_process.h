@@ -85,7 +85,6 @@ private:
   void Docs_wait_for_partner();
   void Docs_start_waiting_for_partner();
 
-  int waiting_for_partner_rank_;
   int current_partner_rank_;
 
   void Set_up_communication();
