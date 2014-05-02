@@ -109,11 +109,7 @@ void ThiefProcess::Partnership_insert() {
   msg[RANK_FIELD]       = static_cast<int>(Get_rank());
   msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
   msg[QUEUE_FIELD]      = PARTNERSHIP_Q_ID;
-
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
-  }
+  ThiefProcess::Broadcast(msg, REQUEST_TAG);
 
   partnership_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
 
@@ -200,10 +196,7 @@ void ThiefProcess::Docs_request_entry() {
   msg[TIMESTAMP_FIELD]  = static_cast<int>(entry_timestamp_);
   msg[QUEUE_FIELD]      = DOCUMENTATION_Q_ID;
 
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
-  }
+  ThiefProcess::Broadcast(msg, REQUEST_TAG);
 
   documentation_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
 
@@ -289,4 +282,11 @@ void ThiefProcess::Docs_wait_for_partner() {
 unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
   timestamp_ = std::max(timestamp_, other_timestamp) + 1;
   return timestamp_;
+}
+
+void ThiefProcess::Broadcast(int msg[], int tag_type) {
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, tag_type);
+  }
 }

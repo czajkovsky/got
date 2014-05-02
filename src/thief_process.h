@@ -88,6 +88,8 @@ private:
   int waiting_for_partner_rank_;
   int current_partner_rank_;
 
+  void Broadcast(int msg[], int tag_type);
+
   void Set_up_communication();
   void Main_loop();
   void Try_communication();
