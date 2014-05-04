@@ -4,8 +4,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <mpi.h>
-#include <unistd.h>
-#include <time.h>
+#include <ctime>
 
 #include "sizes.h"
 
@@ -40,8 +39,6 @@ void ThiefProcess::Main_loop() {
     Try_communication();
     (this->*state_)();
     Try_release_resources();
-
-    // usleep(100000);  // TODO remove it later
   }
 }
 
@@ -53,7 +50,6 @@ void ThiefProcess::Try_communication() {
 
       if (requests_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
-        // std::cout << "[" << Get_rank() << "] " "request from " << requests_[i][RANK_FIELD] << std::endl;
       } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       }
@@ -118,10 +114,6 @@ void ThiefProcess::Partnership_insert() {
     if (i == Get_rank()) continue;
     confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirms_[i], MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
   }
-//if (Get_rank() == 0) {
-//  std::cout << "[" << Get_rank() << "] " "printing" << std::endl;
-//  partnership_queue_.Print();
-//}
 
   state_ = &ThiefProcess::Partnership_wait_for_confirm;
 }
@@ -135,16 +127,11 @@ void ThiefProcess::Partnership_wait_for_confirm() {
     }
   }
   if (confirmed) {
-    //std::cout << "[" << Get_rank() << "] " "confirmed" << std::endl;
     state_ = &ThiefProcess::Partnership_wait_for_top;
   }
 }
 
 void ThiefProcess::Partnership_wait_for_top() {
-//if (Get_rank() == 0) {
-//  std::cout << "[" << Get_rank() << "] " "printing" << std::endl;
-//  partnership_queue_.Print();
-//}
   if (partnership_queue_.Is_in_top(Get_sizes().Get_number_of_thieves(), WaitingProcess(entry_timestamp_, Get_rank()))) {
     state_ = &ThiefProcess::Partnership_critical_section;
   }
@@ -152,7 +139,6 @@ void ThiefProcess::Partnership_wait_for_top() {
 
 void ThiefProcess::Partnership_critical_section() {
   std::cout << "[" << Get_rank() << "] " "partnership critical section" << std::endl;
-  //partnership_queue_.Print();
 
   if (partnership_queue_.Position_of(WaitingProcess(entry_timestamp_, Get_rank())) % 2 == 1) {
     Increment_timestamp();
