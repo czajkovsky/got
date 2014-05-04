@@ -40,7 +40,7 @@ private:
   static const unsigned int PARTNERSHIP_Q_ID = 0;
   static const unsigned int DOCUMENTATION_Q_ID = 1;
 
-  static const unsigned int PAPERWORK_DURATION = 10;
+  static const unsigned int PAPERWORK_DURATION = 3;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];

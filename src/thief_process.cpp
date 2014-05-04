@@ -169,7 +169,6 @@ void ThiefProcess::Partnership_wait_for_partner() {
     Increment_timestamp(partner_[TIMESTAMP_FIELD]);
     current_partner_rank_ = partner_[RANK_FIELD];
     std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
-    // state_ = &ThiefProcess::Docs_request_entry;
     state_ = &ThiefProcess::Partnership_release;
   }
 }
@@ -183,7 +182,8 @@ void ThiefProcess::Partnership_notify_partner() {
   MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
 
   std::cout << "[b] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
-  state_ = &ThiefProcess::Partnership_insert;
+  state_ = &ThiefProcess::Docs_start_waiting_for_partner;
+  // state_ = &ThiefProcess::Partnership_insert;
 }
 
 void ThiefProcess::Partnership_release() {
@@ -210,8 +210,8 @@ void ThiefProcess::Partnership_release() {
     WaitingProcess(entry_timestamp_, Get_rank())
   );
 
-  // state_ = &ThiefProcess::Docs_start_waiting_for_partner;
-  state_ = &ThiefProcess::Partnership_insert;
+  state_ = &ThiefProcess::Docs_request_entry;
+  // state_ = &ThiefProcess::Partnership_insert;
 }
 
 void ThiefProcess::Docs_request_entry() {
@@ -266,6 +266,7 @@ void ThiefProcess::Docs_critical_section() {
     time(&now);
     if (difftime(now, sleep_start_) > PAPERWORK_DURATION) {
       std::cout << "[" << Get_rank() << "] " "has finished filling the docs" << std::endl;
+      sleep_start_ = time_t(-1);
       state_ = &ThiefProcess::Docs_release;
     }
   }
