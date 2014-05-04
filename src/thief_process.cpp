@@ -282,8 +282,7 @@ void ThiefProcess::Docs_release() {
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
   std::cout << "[" << Get_rank()<< "] has started waiting for the docs" << std::endl;
-  int msg[MESSAGE_LENGTH];
-  docs_request_ = MPI::COMM_WORLD.Irecv(msg, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, DOCS_TAG);
+  docs_request_ = MPI::COMM_WORLD.Irecv(docs_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, DOCS_TAG);
   state_ = &ThiefProcess::Docs_wait_for_partner;
 }
 

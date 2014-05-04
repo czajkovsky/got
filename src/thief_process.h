@@ -46,6 +46,7 @@ private:
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int partner_[MESSAGE_LENGTH];
+  int docs_[MESSAGE_LENGTH];
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
