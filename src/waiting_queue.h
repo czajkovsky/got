@@ -13,6 +13,7 @@ public:
   unsigned int Position_of(const WaitingProcess&) const;
 
   WaitingProcess Before(const WaitingProcess&) const;
+  WaitingProcess After(const WaitingProcess&) const;
 
   bool Is_on_top(const WaitingProcess&) const;
   bool Is_in_top(unsigned int k, const WaitingProcess&) const;

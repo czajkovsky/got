@@ -75,6 +75,7 @@ private:
   void Partnership_critical_section();
   void Partnership_release();
   void Partnership_wait_for_partner();
+  void Partnership_notify_partner();
 
   void Docs_request_entry();
   void Docs_wait_for_confirm();

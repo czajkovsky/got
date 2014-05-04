@@ -41,7 +41,7 @@ void ThiefProcess::Main_loop() {
     (this->*state_)();
     Try_release_resources();
 
-    usleep(100000);  // TODO remove it later
+    // usleep(100000);  // TODO remove it later
   }
 }
 
@@ -75,7 +75,7 @@ void ThiefProcess::Try_communication() {
 
       if (releases_[i][QUEUE_FIELD] == PARTNERSHIP_Q_ID) {
         partnership_queue_.Erase(
-          partnership_queue_.Before(WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD]))
+          partnership_queue_.After(WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD]))
         );
         partnership_queue_.Erase(
           WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD])
@@ -118,6 +118,10 @@ void ThiefProcess::Partnership_insert() {
     if (i == Get_rank()) continue;
     confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirms_[i], MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
   }
+//if (Get_rank() == 0) {
+//  std::cout << "[" << Get_rank() << "] " "printing" << std::endl;
+//  partnership_queue_.Print();
+//}
 
   state_ = &ThiefProcess::Partnership_wait_for_confirm;
 }
@@ -131,14 +135,16 @@ void ThiefProcess::Partnership_wait_for_confirm() {
     }
   }
   if (confirmed) {
-    // std::cout << "[" << Get_rank() << "] " "confirmed" << std::endl;
+    //std::cout << "[" << Get_rank() << "] " "confirmed" << std::endl;
     state_ = &ThiefProcess::Partnership_wait_for_top;
   }
 }
 
 void ThiefProcess::Partnership_wait_for_top() {
-  // std::cout << "printing" << std::endl;
-  // partnership_queue_.Print();
+//if (Get_rank() == 0) {
+//  std::cout << "[" << Get_rank() << "] " "printing" << std::endl;
+//  partnership_queue_.Print();
+//}
   if (partnership_queue_.Is_in_top(Get_sizes().Get_number_of_thieves(), WaitingProcess(entry_timestamp_, Get_rank()))) {
     state_ = &ThiefProcess::Partnership_critical_section;
   }
@@ -146,37 +152,43 @@ void ThiefProcess::Partnership_wait_for_top() {
 
 void ThiefProcess::Partnership_critical_section() {
   std::cout << "[" << Get_rank() << "] " "partnership critical section" << std::endl;
-  partnership_queue_.Print();
+  //partnership_queue_.Print();
 
   if (partnership_queue_.Position_of(WaitingProcess(entry_timestamp_, Get_rank())) % 2 == 1) {
     Increment_timestamp();
-    partner_request_ = MPI::COMM_WORLD.Irecv(&partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
+    partner_request_ = MPI::COMM_WORLD.Irecv(partner_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
     state_ = &ThiefProcess::Partnership_wait_for_partner;
   } else {
-    unsigned int current_timestamp = Increment_timestamp();
-    int msg[MESSAGE_LENGTH];
-    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
-    msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
     current_partner_rank_ = partnership_queue_.Before(WaitingProcess(entry_timestamp_, Get_rank())).Get_rank();
-
-    MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
-
-    std::cout << "[b] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
-    state_ = &ThiefProcess::Partnership_release;
+    state_ = &ThiefProcess::Partnership_notify_partner;
   }
 }
 
 void ThiefProcess::Partnership_wait_for_partner() {
   if (partner_request_.Test()) {
+    Increment_timestamp(partner_[TIMESTAMP_FIELD]);
     current_partner_rank_ = partner_[RANK_FIELD];
     std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
-    state_ = &ThiefProcess::Docs_request_entry;
+    // state_ = &ThiefProcess::Docs_request_entry;
+    state_ = &ThiefProcess::Partnership_release;
   }
+}
+
+void ThiefProcess::Partnership_notify_partner() {
+  unsigned int current_timestamp = Increment_timestamp();
+  int msg[MESSAGE_LENGTH];
+  msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+  msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
+
+  MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
+
+  std::cout << "[b] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+  state_ = &ThiefProcess::Partnership_insert;
 }
 
 void ThiefProcess::Partnership_release() {
   assert(static_cast<int>(Get_rank()) != current_partner_rank_);
-  assert(current_partner_rank_ != -1);
+  assert(current_partner_rank_ > -1);
 
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
@@ -190,14 +202,16 @@ void ThiefProcess::Partnership_release() {
 
     MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
   }
-  state_ = &ThiefProcess::Docs_start_waiting_for_partner;
 
   partnership_queue_.Erase(
-    partnership_queue_.Before(WaitingProcess(entry_timestamp_, Get_rank()))
+    partnership_queue_.After(WaitingProcess(entry_timestamp_, Get_rank()))
   );
   partnership_queue_.Erase(
     WaitingProcess(entry_timestamp_, Get_rank())
   );
+
+  // state_ = &ThiefProcess::Docs_start_waiting_for_partner;
+  state_ = &ThiefProcess::Partnership_insert;
 }
 
 void ThiefProcess::Docs_request_entry() {
