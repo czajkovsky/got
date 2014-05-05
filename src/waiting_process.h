@@ -13,6 +13,9 @@ public:
   friend bool operator==(const WaitingProcess&, const WaitingProcess&);
   friend std::ostream& operator<<(std::ostream&, const WaitingProcess&);
 
+  unsigned int Get_timestamp() const { return timestamp_; }
+  int Get_rank() const { return rank_; }
+
 private:
   unsigned int timestamp_;
   int rank_;

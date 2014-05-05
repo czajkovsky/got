@@ -40,12 +40,13 @@ private:
   static const unsigned int PARTNERSHIP_Q_ID = 0;
   static const unsigned int DOCUMENTATION_Q_ID = 1;
 
-  static const unsigned int PAPERWORK_DURATION = 10;
+  static const unsigned int PAPERWORK_DURATION = 3;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int partner_[MESSAGE_LENGTH];
+  int docs_[MESSAGE_LENGTH];
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
@@ -75,6 +76,7 @@ private:
   void Partnership_critical_section();
   void Partnership_release();
   void Partnership_wait_for_partner();
+  void Partnership_notify_partner();
 
   void Docs_request_entry();
   void Docs_wait_for_confirm();
@@ -85,7 +87,6 @@ private:
   void Docs_wait_for_partner();
   void Docs_start_waiting_for_partner();
 
-  int waiting_for_partner_rank_;
   int current_partner_rank_;
 
   void Broadcast(int msg[], int tag_type);

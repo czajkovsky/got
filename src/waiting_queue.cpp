@@ -9,13 +9,37 @@ WaitingProcess WaitingQueue::Insert(const WaitingProcess& wp) {
   return wp;
 }
 
-unsigned int WaitingQueue::Position_of(const WaitingProcess& wp) {
+unsigned int WaitingQueue::Position_of(const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     return static_cast<unsigned int>(std::distance(collection_.begin(), found)) + 1;
   } else {
     return 0;
   } 
+}
+
+WaitingProcess WaitingQueue::Before(const WaitingProcess& wp) const {
+  std::set<WaitingProcess>::iterator found = collection_.find(wp);
+  if (found != collection_.end() && found != collection_.begin()) {
+    found--;
+    return *found;
+  } else {
+    return wp;
+  }
+}
+
+WaitingProcess WaitingQueue::After(const WaitingProcess& wp) const {
+  std::set<WaitingProcess>::iterator found = collection_.find(wp);
+  if (found != collection_.end()) {
+    found++;
+    if (found != collection_.end()) {
+      return *found;
+    } else {
+      return wp;
+    }
+  } else {
+    return wp;
+  }
 }
 
 bool WaitingQueue::Is_on_top(const WaitingProcess& wp) const {
