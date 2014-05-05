@@ -39,6 +39,7 @@ private:
 
   static const unsigned int PARTNERSHIP_Q_ID = 0;
   static const unsigned int DOCUMENTATION_Q_ID = 1;
+  static const unsigned int HOUSE_Q_ID = 2;
 
   static const unsigned int PAPERWORK_DURATION = 3;
 
@@ -58,6 +59,7 @@ private:
   WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
 
   unsigned int entry_timestamp_;
+  int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];
 
   enum CommunicationTAG {
     REQUEST_TAG,
@@ -86,6 +88,10 @@ private:
 
   void Docs_wait_for_partner();
   void Docs_start_waiting_for_partner();
+
+  void House_request_entry();
+  void House_wait_for_confirm();
+  void House_critical_section();
 
   int current_partner_rank_;
 

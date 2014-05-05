@@ -13,6 +13,8 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   sizes_ = sizes;
   sleep_start_ = time_t(-1);
 
+  std::fill_n(house_entry_timestamp_, Sizes::MAX_NUMBER_OF_HOUSES, -1);
+
   state_ = &ThiefProcess::Partnership_insert;
 
   LOG_INFO("Starting ThiefProcess"
@@ -52,10 +54,14 @@ void ThiefProcess::Try_communication() {
         partnership_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
       } else if (requests_[i][QUEUE_FIELD] == DOCUMENTATION_Q_ID) {
         documentation_queue_.Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
-      }
-      else {
-        int house_id = requests_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
-        houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+      } else {
+        const int house_id = requests_[i][QUEUE_FIELD] - HOUSE_Q_ID;
+        if (house_entry_timestamp_[house_id] == -1 ||
+          WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]) < WaitingProcess(house_entry_timestamp_[house_id], Get_rank())) {
+        } else {
+          houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+          continue;
+        }
       }
 
       requests_[i][TIMESTAMP_FIELD] = current_timestamp;
@@ -80,10 +86,6 @@ void ThiefProcess::Try_communication() {
         documentation_queue_.Erase(
           WaitingProcess(releases_[i][ENTRY_FIELD], releases_[i][RANK_FIELD])
         );
-      }
-      else {
-        int house_id = releases_[i][QUEUE_FIELD] - PARTNERSHIP_Q_ID;
-        houses_queue_[house_id].Pop();
       }
 
       release_requests_[i] = MPI::COMM_WORLD.Irecv(releases_[i], MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
