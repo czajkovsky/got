@@ -1,4 +1,5 @@
 TARGET = main
+THIEF_LIB = thief.a
 
 CXX = mpic++
 LD = mpic++
@@ -8,36 +9,36 @@ CXX_FLAGS = -Wall -Wextra
 LD_FLAGS =
 AR_FLAGS = rs
 
-OUT_DIR = bin
+OBJ_DIR = bin
 SRC_DIR = src
+
+MAIN_SRCS = main.cpp
+THIEF_LIB_SRCS = logger.cpp thief_process.cpp waiting_process.cpp waiting_queue.cpp
+MAIN_OBJS = $(addprefix $(OBJ_DIR)/,$(notdir $(MAIN_SRCS:.cpp=.o)))
+THIEF_LIB_OBJS = $(addprefix $(OBJ_DIR)/,$(notdir $(THIEF_LIB_SRCS:.cpp=.o)))
+
+INCLUDES = $(wildcard $(SRC_DIR)/*.h)
+
+USER_MESSAGE = "Welcome to the Guild of Thieves!\nType 'mpirun -np NUMBER_OF_THIEVES $(OBJ_DIR)/$(TARGET)' to run application with NUMBER_OF_THIEVES thieves."
 
 .PHONY: all clean
 
-all: ${OUT_DIR} ${OUT_DIR}/main.o ${OUT_DIR}/thief.a
-	${LD} -o ${OUT_DIR}/main ${OUT_DIR}/main.o ${OUT_DIR}/thief.a
+all: $(OBJ_DIR) $(OBJ_DIR)/$(TARGET)
+	@echo $(USER_MESSAGE)
 
-${OUT_DIR}:
-	mkdir -p ${OUT_DIR}
+$(OBJ_DIR)/$(TARGET): $(MAIN_OBJS) $(OBJ_DIR)/$(THIEF_LIB)
+	$(LD) $(LD_FLAGS) -o $(OBJ_DIR)/$(TARGET) $^
 
-${OUT_DIR}/main.o: ${SRC_DIR}/main.cpp ${SRC_DIR}/thief_process.h ${SRC_DIR}/sizes.h
-	${CXX} -o ${OUT_DIR}/main.o -c ${SRC_DIR}/main.cpp ${CXX_FLAGS}
+$(OBJ_DIR)/$(THIEF_LIB): $(THIEF_LIB_OBJS)
+	$(AR) $(AR_FLAGS) $(OBJ_DIR)/$(THIEF_LIB) $^
 
-${OUT_DIR}/thief.a: ${OUT_DIR}/thief_process.o ${OUT_DIR}/waiting_process.o ${OUT_DIR}/waiting_queue.o ${OUT_DIR}/logger.o
-	${AR} ${AR_FLAGS} ${OUT_DIR}/thief.a ${OUT_DIR}/thief_process.o ${OUT_DIR}/waiting_process.o ${OUT_DIR}/waiting_queue.o ${OUT_DIR}/logger.o
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCLUDES)
+	$(CXX) $(CXX_FLAGS) -o $@ -c $<
 
-${OUT_DIR}/thief_process.o: ${SRC_DIR}/thief_process.cpp ${SRC_DIR}/thief_process.h ${SRC_DIR}/sizes.h ${SRC_DIR}/waiting_queue.h ${SRC_DIR}/logger.h
-	${CXX} -o ${OUT_DIR}/thief_process.o -c ${SRC_DIR}/thief_process.cpp ${CXX_FLAGS}
-
-${OUT_DIR}/waiting_process.o: ${SRC_DIR}/waiting_process.cpp ${SRC_DIR}/waiting_process.h ${SRC_DIR}/waiting_queue.h
-	${CXX} -o ${OUT_DIR}/waiting_process.o -c ${SRC_DIR}/waiting_process.cpp ${CXX_FLAGS}
-
-${OUT_DIR}/waiting_queue.o: ${SRC_DIR}/waiting_queue.cpp ${SRC_DIR}/waiting_queue.h ${SRC_DIR}/waiting_process.h
-	${CXX} -o ${OUT_DIR}/waiting_queue.o -c ${SRC_DIR}/waiting_queue.cpp ${CXX_FLAGS}
-
-${OUT_DIR}/logger.o: ${SRC_DIR}/logger.cpp ${SRC_DIR}/logger.h ${SRC_DIR}/thief_process.h ${SRC_DIR}/sizes.h
-	${CXX} -o ${OUT_DIR}/logger.o -c ${SRC_DIR}/logger.cpp ${CXX_FLAGS}
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 clean:
-	-rm -rf bin/*.o
-	-rm -rf bin/*.a
-	-rm -rf bin/main
+	-rm -rf $(OBJ_DIR)/*.o
+	-rm -rf $(OBJ_DIR)/*.a
+	-rm -rf $(OBJ_DIR)/$(TARGET)
