@@ -25,6 +25,7 @@ private:
 
   unsigned int timestamp_;
   time_t sleep_start_;
+  time_t house_sleep_start_;
 
   unsigned int rank_;
   Sizes sizes_;
@@ -37,11 +38,14 @@ private:
     ENTRY_FIELD
   };
 
-  static const unsigned int PARTNERSHIP_Q_ID = 0;
-  static const unsigned int DOCUMENTATION_Q_ID = 1;
-  static const unsigned int HOUSE_Q_ID = 2;
+  enum QueueID {
+    PARTNERSHIP_Q_ID,
+    DOCUMENTATION_Q_ID,
+    HOUSE_Q_ID
+  };
 
   static const unsigned int PAPERWORK_DURATION = 3;
+  static const unsigned int BURGLARY_DURATION = 5;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];

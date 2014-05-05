@@ -288,6 +288,51 @@ void ThiefProcess::Docs_wait_for_partner() {
   }
 }
 
+void ThiefProcess::House_request_entry() {
+  const int house_id = 0;  // TODO change it
+  if (house_entry_timestamp_[house_id] == -1) {
+    house_entry_timestamp_[house_id] = Increment_timestamp();
+
+    int msg[MESSAGE_LENGTH];
+    msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+    msg[TIMESTAMP_FIELD]  = static_cast<int>(house_entry_timestamp_[house_id]);
+    msg[QUEUE_FIELD]      = HOUSE_Q_ID + house_id;
+    msg[ENTRY_FIELD]      = house_entry_timestamp_[house_id];
+
+    Broadcast(msg, REQUEST_TAG);
+
+    state_ = &ThiefProcess::House_wait_for_confirm;
+  }
+}
+
+void ThiefProcess::House_wait_for_confirm() {
+  bool confirmed = true;
+  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+    if (i == Get_rank()) continue;
+    if (!confirm_requests_[i].Test()) {
+      confirmed = false;
+    }
+  }
+  if (confirmed) {
+    state_ = &ThiefProcess::House_critical_section;
+  }
+}
+
+void ThiefProcess::House_critical_section() {
+  if (house_sleep_start_ == time_t(-1)) {
+    time(&house_sleep_start_);
+    LOG_INFO("has started robbing the house (critical section)")
+  } else {
+    time_t now;
+    time(&now);
+    if (difftime(now, house_sleep_start_) > BURGLARY_DURATION) {
+      LOG_INFO("has finished robbing the house")
+      house_sleep_start_ = time_t(-1);
+      // state_ = &ThiefProcess::Docs_release;
+    }
+  }
+}
+
 unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
   timestamp_ = std::max(timestamp_, other_timestamp) + 1;
   return timestamp_;
