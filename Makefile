@@ -1,5 +1,5 @@
 TARGET = main
-THIEF_LIB = thief.a
+THIEF_LIB = libthief.a
 
 CXX = mpic++
 LD = mpic++
@@ -19,7 +19,7 @@ THIEF_LIB_OBJS = $(addprefix $(OBJ_DIR)/,$(notdir $(THIEF_LIB_SRCS:.cpp=.o)))
 
 INCLUDES = $(wildcard $(SRC_DIR)/*.h)
 
-USER_MESSAGE = "Welcome to the Guild of Thieves!\nType 'mpirun -np NUMBER_OF_THIEVES $(OBJ_DIR)/$(TARGET)' to run application with NUMBER_OF_THIEVES thieves."
+USER_MESSAGE = "Welcome to the Guild of Thieves!"
 
 .PHONY: all clean
 
