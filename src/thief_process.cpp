@@ -1,11 +1,11 @@
 #include "thief_process.h"
 
-#include <iostream>
 #include <algorithm>
 #include <cstdlib>
 #include <mpi.h>
 #include <ctime>
 
+#include "logger.h"
 #include "sizes.h"
 
 void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
@@ -15,11 +15,11 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
 
   state_ = &ThiefProcess::Partnership_insert;
 
-  std::cout << "Starting ThiefProcess [rank = " << Get_rank() << "] "
-    << "[thieves = " << Get_sizes().Get_number_of_thieves()
+  LOG_INFO("Starting ThiefProcess"
+    << " [thieves = " << Get_sizes().Get_number_of_thieves()
     << ", desks = " << Get_sizes().Get_number_of_desks()
     << ", houses = " << Get_sizes().Get_number_of_houses()
-    << "]" << std::endl;
+    << "]")
 
   Set_up_communication();
   Main_loop();
@@ -134,7 +134,7 @@ void ThiefProcess::Partnership_wait_for_top() {
 }
 
 void ThiefProcess::Partnership_critical_section() {
-  std::cout << "[" << Get_rank() << "] " "partnership critical section" << std::endl;
+  LOG_DEBUG("partnership critical section")
 
   if (partnership_queue_.Position_of(WaitingProcess(entry_timestamp_, Get_rank())) % 2 == 1) {
     Increment_timestamp();
@@ -150,7 +150,7 @@ void ThiefProcess::Partnership_wait_for_partner() {
   if (partner_request_.Test()) {
     Increment_timestamp(partner_[TIMESTAMP_FIELD]);
     current_partner_rank_ = partner_[RANK_FIELD];
-    std::cout << "[a] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+    LOG_INFO("received partner: " << current_partner_rank_)
     state_ = &ThiefProcess::Partnership_release;
   }
 }
@@ -163,7 +163,7 @@ void ThiefProcess::Partnership_notify_partner() {
 
   MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
 
-  std::cout << "[b] rank = " << Get_rank() << ", partner = " << current_partner_rank_ << std::endl;
+  LOG_INFO("found partner: " << current_partner_rank_)
   state_ = &ThiefProcess::Docs_start_waiting_for_partner;
   // state_ = &ThiefProcess::Partnership_insert;
 }
@@ -239,12 +239,12 @@ void ThiefProcess::Docs_wait_for_top() {
 void ThiefProcess::Docs_critical_section() {
   if (sleep_start_ == time_t(-1)) {
     time(&sleep_start_);
-    std::cout << "[" << Get_rank() << "] " "has started filling the docs (critical section)" << std::endl;
+    LOG_INFO("has started filling the docs (critical section)")
   } else {
     time_t now;
     time(&now);
     if (difftime(now, sleep_start_) > PAPERWORK_DURATION) {
-      std::cout << "[" << Get_rank() << "] " "has finished filling the docs" << std::endl;
+      LOG_INFO("has finished filling the docs")
       sleep_start_ = time_t(-1);
       state_ = &ThiefProcess::Docs_release;
     }
@@ -274,15 +274,14 @@ void ThiefProcess::Docs_release() {
 }
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
-  std::cout << "[" << Get_rank()<< "] has started waiting for the docs" << std::endl;
+  LOG_INFO("has started waiting for the docs")
   docs_request_ = MPI::COMM_WORLD.Irecv(docs_, MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, DOCS_TAG);
   state_ = &ThiefProcess::Docs_wait_for_partner;
 }
 
 void ThiefProcess::Docs_wait_for_partner() {
   if (docs_request_.Test()) {
-    std::cout << "[" << Get_rank()<< "] "
-    << current_partner_rank_ << " - has filled the docs" << std::endl;
+    LOG_INFO(current_partner_rank_ << " - has filled the docs")
     state_ = &ThiefProcess::Partnership_insert;
   }
 }
