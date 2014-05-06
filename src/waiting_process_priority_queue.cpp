@@ -1,15 +1,15 @@
-#include "waiting_queue.h"
+#include "waiting_process_priority_queue.h"
 
 #include <iostream>
 #include <algorithm>
 #include <iterator>
 
-WaitingProcess WaitingQueue::Insert(const WaitingProcess& wp) {
+WaitingProcess WaitingProcessPriorityQueue::Insert(const WaitingProcess& wp) {
   collection_.insert(wp);
   return wp;
 }
 
-unsigned int WaitingQueue::Position_of(const WaitingProcess& wp) const {
+unsigned int WaitingProcessPriorityQueue::Position_of(const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     return static_cast<unsigned int>(std::distance(collection_.begin(), found)) + 1;
@@ -18,7 +18,7 @@ unsigned int WaitingQueue::Position_of(const WaitingProcess& wp) const {
   } 
 }
 
-WaitingProcess WaitingQueue::Before(const WaitingProcess& wp) const {
+WaitingProcess WaitingProcessPriorityQueue::Before(const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end() && found != collection_.begin()) {
     found--;
@@ -28,7 +28,7 @@ WaitingProcess WaitingQueue::Before(const WaitingProcess& wp) const {
   }
 }
 
-WaitingProcess WaitingQueue::After(const WaitingProcess& wp) const {
+WaitingProcess WaitingProcessPriorityQueue::After(const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     found++;
@@ -42,7 +42,7 @@ WaitingProcess WaitingQueue::After(const WaitingProcess& wp) const {
   }
 }
 
-bool WaitingQueue::Is_on_top(const WaitingProcess& wp) const {
+bool WaitingProcessPriorityQueue::Is_on_top(const WaitingProcess& wp) const {
   if (collection_.empty()) {
     return false;
   } else {
@@ -51,7 +51,7 @@ bool WaitingQueue::Is_on_top(const WaitingProcess& wp) const {
   }
 }
 
-bool WaitingQueue::Is_in_top(unsigned int k, const WaitingProcess& wp) const {
+bool WaitingProcessPriorityQueue::Is_in_top(unsigned int k, const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     return (std::distance(collection_.begin(), found) < k);
@@ -60,7 +60,7 @@ bool WaitingQueue::Is_in_top(unsigned int k, const WaitingProcess& wp) const {
   }
 }
 
-bool WaitingQueue::Pop() {
+bool WaitingProcessPriorityQueue::Pop() {
   if (collection_.empty()) {
     return false;
   }
@@ -69,7 +69,7 @@ bool WaitingQueue::Pop() {
   return true;
 }
 
-bool WaitingQueue::Erase(const WaitingProcess& wp) {
+bool WaitingProcessPriorityQueue::Erase(const WaitingProcess& wp) {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     collection_.erase(found);
@@ -79,6 +79,6 @@ bool WaitingQueue::Erase(const WaitingProcess& wp) {
   }
 }
 
-void WaitingQueue::Print() const {
+void WaitingProcessPriorityQueue::Print() const {
   std::copy(collection_.begin(), collection_.end(), std::ostream_iterator<WaitingProcess>(std::cout, "\n"));
 }

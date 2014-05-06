@@ -1,5 +1,4 @@
 #include "waiting_process.h"
-#include "waiting_queue.h"
 
 #include <ostream>
 #include <algorithm>

@@ -1,12 +1,12 @@
-#ifndef WAITING_QUEUE_H_
-#define WAITING_QUEUE_H_
+#ifndef WAITING_PROCESS_PRIORITY_QUEUE_H_
+#define WAITING_PROCESS_PRIORITY_QUEUE_H_
 
 #include "waiting_process.h"
 #include <set>
 
-class WaitingQueue {
+class WaitingProcessPriorityQueue {
 public:
-  WaitingQueue() {}
+  WaitingProcessPriorityQueue() {}
 
   WaitingProcess Insert(const WaitingProcess&);
 
@@ -24,10 +24,10 @@ public:
   void Print() const;
 
 private:
-  WaitingQueue(const WaitingQueue&);
-  WaitingQueue& operator=(const WaitingQueue&);
+  WaitingProcessPriorityQueue(const WaitingProcessPriorityQueue&);
+  WaitingProcessPriorityQueue& operator=(const WaitingProcessPriorityQueue&);
 
   std::set<WaitingProcess> collection_;
 };
 
-#endif  // WAITING_QUEUE_H_
+#endif  // WAITING_PROCESS_PRIORITY_QUEUE_H_

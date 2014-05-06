@@ -13,7 +13,7 @@ OBJ_DIR = bin
 SRC_DIR = src
 
 MAIN_SRCS = main.cpp
-THIEF_LIB_SRCS = logger.cpp thief_process.cpp waiting_process.cpp waiting_queue.cpp
+THIEF_LIB_SRCS = logger.cpp thief_process.cpp waiting_process.cpp waiting_process_priority_queue.cpp
 MAIN_OBJS = $(addprefix $(OBJ_DIR)/,$(notdir $(MAIN_SRCS:.cpp=.o)))
 THIEF_LIB_OBJS = $(addprefix $(OBJ_DIR)/,$(notdir $(THIEF_LIB_SRCS:.cpp=.o)))
 

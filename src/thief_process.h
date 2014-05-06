@@ -2,7 +2,7 @@
 #define THIEF_PROCESS_H_
 
 #include "sizes.h"
-#include "waiting_queue.h"
+#include "waiting_process_priority_queue.h"
 #include <mpi.h>
 
 class ThiefProcess {
@@ -58,9 +58,9 @@ private:
   MPI::Request partner_request_;
   MPI::Request docs_request_;
 
-  WaitingQueue partnership_queue_;
-  WaitingQueue documentation_queue_;
-  WaitingQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
+  WaitingProcessPriorityQueue partnership_queue_;
+  WaitingProcessPriorityQueue documentation_queue_;
+  WaitingProcessPriorityQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
 
   unsigned int entry_timestamp_;
   int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];
