@@ -3,6 +3,7 @@
 
 #include "sizes.h"
 #include "waiting_process_priority_queue.h"
+#include "left_house_queue.h"
 #include <mpi.h>
 
 class ThiefProcess {
@@ -60,7 +61,8 @@ private:
 
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue documentation_queue_;
-  WaitingProcessPriorityQueue houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
+  WaitingProcessPriorityQueue waiting_houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
+  LeftHouseQueue left_houses_queue_;
 
   unsigned int entry_timestamp_;
   int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];

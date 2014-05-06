@@ -59,7 +59,7 @@ void ThiefProcess::Try_communication() {
         if (house_entry_timestamp_[house_id] == -1 ||
           WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]) < WaitingProcess(house_entry_timestamp_[house_id], Get_rank())) {
         } else {
-          houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+          waiting_houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
           continue;
         }
       }
