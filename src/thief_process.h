@@ -46,7 +46,7 @@ private:
   };
 
   static const unsigned int PAPERWORK_DURATION = 3;
-  static const unsigned int BURGLARY_DURATION = 5;
+  static const unsigned int BURGLARY_DURATION = 7;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
@@ -58,6 +58,7 @@ private:
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request partner_request_;
   MPI::Request docs_request_;
+  MPI::Request house_request_;
 
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue documentation_queue_;
@@ -72,7 +73,8 @@ private:
     CONFIRM_TAG,
     RELEASE_TAG,
     PARTNER_TAG,
-    DOCS_TAG
+    DOCS_TAG,
+    HOUSE_TAG
   };
 
   void (ThiefProcess::*state_)();
@@ -98,6 +100,8 @@ private:
   void House_request_entry();
   void House_wait_for_confirm();
   void House_critical_section();
+  void House_wait_for_partner();
+  void House_notify_partner();
 
   int current_partner_rank_;
 
