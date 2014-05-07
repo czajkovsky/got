@@ -16,8 +16,8 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
 
   std::fill_n(house_entry_timestamp_, Sizes::MAX_NUMBER_OF_HOUSES, -1);
 
-  // state_ = &ThiefProcess::Partnership_insert;
-  state_ = &ThiefProcess::House_request_entry;
+  state_ = &ThiefProcess::Partnership_insert;
+  // state_ = &ThiefProcess::House_request_entry;
 
   LOG_INFO("Starting ThiefProcess"
     << " [thieves = " << Get_sizes().Get_number_of_thieves()
@@ -286,7 +286,6 @@ void ThiefProcess::Docs_release() {
 
   int msg[MESSAGE_LENGTH];
   MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, DOCS_TAG);
-  state_ = &ThiefProcess::Partnership_insert;
 
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
@@ -302,6 +301,11 @@ void ThiefProcess::Docs_release() {
   }
 
   documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
+
+  LOG_INFO("has started waiting for the house")
+  house_request_ = MPI::COMM_WORLD.Irecv(docs_, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, HOUSE_TAG);
+  state_ = &ThiefProcess::House_wait_for_partner;
+  // state_ = &ThiefProcess::Partnership_insert;
 }
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
@@ -313,7 +317,8 @@ void ThiefProcess::Docs_start_waiting_for_partner() {
 void ThiefProcess::Docs_wait_for_partner() {
   if (docs_request_.Test()) {
     LOG_INFO(current_partner_rank_ << " - has filled the docs")
-    state_ = &ThiefProcess::Partnership_insert;
+    state_ = &ThiefProcess::House_request_entry;
+    // state_ = &ThiefProcess::Partnership_insert;
   }
 }
 
@@ -367,10 +372,29 @@ void ThiefProcess::House_critical_section() {
       time_t expiration_time = now + 1;
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
       house_sleep_start_ = time_t(-1);
-      //state_ = &ThiefProcess::Partnership_insert;
-      state_ = &ThiefProcess::House_request_entry;
+      state_ = &ThiefProcess::House_notify_partner;
+      //state_ = &ThiefProcess::House_request_entry;
     }
   }
+}
+
+void ThiefProcess::House_wait_for_partner() {
+  if (house_request_.Test()) {
+    Increment_timestamp(partner_[TIMESTAMP_FIELD]);
+    LOG_INFO("received house info")
+    state_ = &ThiefProcess::Partnership_insert;
+  }
+}
+
+void ThiefProcess::House_notify_partner() {
+  unsigned int current_timestamp = Increment_timestamp();
+  int msg[MESSAGE_LENGTH];
+  msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+  msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
+
+  MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, current_partner_rank_, HOUSE_TAG);
+
+  state_ = &ThiefProcess::Partnership_insert;
 }
 
 unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
