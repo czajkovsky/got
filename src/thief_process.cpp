@@ -12,10 +12,12 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
   rank_ = rank;
   sizes_ = sizes;
   sleep_start_ = time_t(-1);
+  house_sleep_start_ = time_t(-1);
 
   std::fill_n(house_entry_timestamp_, Sizes::MAX_NUMBER_OF_HOUSES, -1);
 
-  state_ = &ThiefProcess::Partnership_insert;
+  // state_ = &ThiefProcess::Partnership_insert;
+  state_ = &ThiefProcess::House_request_entry;
 
   LOG_INFO("Starting ThiefProcess"
     << " [thieves = " << Get_sizes().Get_number_of_thieves()
@@ -58,8 +60,10 @@ void ThiefProcess::Try_communication() {
         const int house_id = requests_[i][QUEUE_FIELD] - HOUSE_Q_ID;
         if (house_entry_timestamp_[house_id] == -1 ||
           WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]) < WaitingProcess(house_entry_timestamp_[house_id], Get_rank())) {
+          LOG_DEBUG("request confirm sent to " << requests_[i][RANK_FIELD])
         } else {
           waiting_houses_queue_[house_id].Insert(WaitingProcess(requests_[i][TIMESTAMP_FIELD], requests_[i][RANK_FIELD]));
+        request_requests_[i] = MPI::COMM_WORLD.Irecv(requests_[i], MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
           continue;
         }
       }
@@ -94,7 +98,32 @@ void ThiefProcess::Try_communication() {
 }
 
 void ThiefProcess::Try_release_resources() {
-  // TODO release houses etc...
+  time_t now;
+  time(&now);
+  while (!left_houses_queue_.Empty() &&
+      left_houses_queue_.Front().Get_expiration_time() <= now) {
+    LeftHouse left_house = left_houses_queue_.Front();
+
+    LOG_INFO("house " << left_house.Get_id() << " released")
+
+    unsigned int current_timestamp = Increment_timestamp();
+
+    while (!waiting_houses_queue_[left_house.Get_id()].Empty()) {
+      WaitingProcess wp = waiting_houses_queue_[left_house.Get_id()].Top();
+     
+      int msg[MESSAGE_LENGTH];
+      msg[RANK_FIELD]       = static_cast<int>(Get_rank());
+      msg[TIMESTAMP_FIELD]  = static_cast<int>(current_timestamp);
+      MPI::COMM_WORLD.Send(msg, MESSAGE_LENGTH, MPI_INT, wp.Get_rank(), CONFIRM_TAG);
+
+      LOG_DEBUG("release confirm sent to " << wp.Get_rank())
+
+      waiting_houses_queue_[left_house.Get_id()].Pop();
+    }
+
+    house_entry_timestamp_[left_house.Get_id()] = -1;
+    left_houses_queue_.Pop();
+  }
 }
 
 void ThiefProcess::Partnership_insert() {
@@ -291,6 +320,7 @@ void ThiefProcess::Docs_wait_for_partner() {
 void ThiefProcess::House_request_entry() {
   const int house_id = 0;  // TODO change it
   if (house_entry_timestamp_[house_id] == -1) {
+    LOG_DEBUG("House request entry")
     house_entry_timestamp_[house_id] = Increment_timestamp();
 
     int msg[MESSAGE_LENGTH];
@@ -299,7 +329,13 @@ void ThiefProcess::House_request_entry() {
     msg[QUEUE_FIELD]      = HOUSE_Q_ID + house_id;
     msg[ENTRY_FIELD]      = house_entry_timestamp_[house_id];
 
+    LOG_WARN("Broadcast")
     Broadcast(msg, REQUEST_TAG);
+
+    for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+      if (i == Get_rank()) continue;
+      confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirms_[i], MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
+    }
 
     state_ = &ThiefProcess::House_wait_for_confirm;
   }
@@ -319,6 +355,7 @@ void ThiefProcess::House_wait_for_confirm() {
 }
 
 void ThiefProcess::House_critical_section() {
+  const int house_id = 0;
   if (house_sleep_start_ == time_t(-1)) {
     time(&house_sleep_start_);
     LOG_INFO("has started robbing the house (critical section)")
@@ -327,8 +364,11 @@ void ThiefProcess::House_critical_section() {
     time(&now);
     if (difftime(now, house_sleep_start_) > BURGLARY_DURATION) {
       LOG_INFO("has finished robbing the house")
+      time_t expiration_time = now + 1;
+      left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
       house_sleep_start_ = time_t(-1);
-      // state_ = &ThiefProcess::Docs_release;
+      //state_ = &ThiefProcess::Partnership_insert;
+      state_ = &ThiefProcess::House_request_entry;
     }
   }
 }

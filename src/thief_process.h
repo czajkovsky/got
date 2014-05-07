@@ -46,7 +46,7 @@ private:
   };
 
   static const unsigned int PAPERWORK_DURATION = 3;
-  static const unsigned int BURGLARY_DURATION = 5;
+  static const unsigned int BURGLARY_DURATION = 2;
 
   int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
   int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
