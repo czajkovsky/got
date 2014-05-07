@@ -21,6 +21,9 @@ public:
   bool Pop();
   bool Erase(const WaitingProcess&);
 
+  bool Empty();
+  WaitingProcess Top();
+
   void Print() const;
 
 private:

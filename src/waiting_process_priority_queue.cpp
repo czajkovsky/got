@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iterator>
+#include <cassert>
 
 WaitingProcess WaitingProcessPriorityQueue::Insert(const WaitingProcess& wp) {
   collection_.insert(wp);
@@ -77,6 +78,15 @@ bool WaitingProcessPriorityQueue::Erase(const WaitingProcess& wp) {
   } else {
     return false;
   }
+}
+
+bool WaitingProcessPriorityQueue::Empty() {
+  return collection_.empty();
+}
+
+WaitingProcess WaitingProcessPriorityQueue::Top() {
+  assert(!Empty());
+  return *(collection_.begin());
 }
 
 void WaitingProcessPriorityQueue::Print() const {
