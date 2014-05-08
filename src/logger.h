@@ -8,8 +8,8 @@
 class Logger {
 public:
   enum MESSAGE_LEVEL {
-    INFO,
     DEBUG,
+    INFO,
     WARN,
     ERROR
   };
@@ -35,14 +35,14 @@ private:
   const unsigned int DIGITS_IN_RANK;
 };
 
-#define LOG_INFO(msg) {\
-  std::stringstream ss; ss << msg;\
-  Logger::Get_logger().Log(Logger::INFO, ss.str());\
-};
-
 #define LOG_DEBUG(msg) {\
   std::stringstream ss; ss << msg;\
   Logger::Get_logger().Log(Logger::DEBUG, ss.str());\
+};
+
+#define LOG_INFO(msg) {\
+  std::stringstream ss; ss << msg;\
+  Logger::Get_logger().Log(Logger::INFO, ss.str());\
 };
 
 #define LOG_WARN(msg) {\

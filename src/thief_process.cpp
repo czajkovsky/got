@@ -6,12 +6,16 @@
 #include <ctime>
 
 #include "message.h"
+#include "communicator.h"
 #include "logger.h"
 #include "sizes.h"
 
-void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
-  rank_ = rank;
-  sizes_ = sizes;
+ThiefProcess::ThiefProcess(Sizes sizes)
+  : sizes_(sizes),
+    communicator_() {
+}
+
+void ThiefProcess::Run() {
   sleep_start_ = time_t(-1);
   house_sleep_start_ = time_t(-1);
 
@@ -30,18 +34,14 @@ void ThiefProcess::Run(unsigned int rank, Sizes sizes) {
 }
 
 void ThiefProcess::Set_up_communication() {
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    request_requests_[i] = MPI::COMM_WORLD.Irecv(
-      request_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
-    release_requests_[i] = MPI::COMM_WORLD.Irecv(
-      release_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
-  }
+  communicator_.Irecv_all(
+    request_, Communicator::REQUEST_TAG, request_requests_);
+  communicator_.Irecv_all(
+    release_, Communicator::RELEASE_TAG, release_requests_);
 }
 
 void ThiefProcess::Main_loop() {
-  while (true)
-  {
+  while (true) {
     Try_communication();
     (this->*state_)();
     Try_release_resources();
@@ -76,8 +76,7 @@ void ThiefProcess::Try_communication() {
         request_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT,
         request_[i].Get(Message::RANK_FIELD), CONFIRM_TAG);
 
-      request_requests_[i] = MPI::COMM_WORLD.Irecv(
-        request_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
+      request_requests_[i] = communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
     }
   }
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {

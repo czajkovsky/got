@@ -8,14 +8,14 @@
 #include <cmath>
 
 #include "sizes.h"
-#include "thief_process.h"
+#include "communicator.h"
 
 void Logger::Log(MESSAGE_LEVEL message_level, const std::string& msg) {
   output_stream_ << std::left
     << Get_current_time() << " "
     << Message_level_to_string(message_level) << " "
     << "[" << std::setw(DIGITS_IN_RANK) << std::setfill('0')
-    << std::right << ThiefProcess::Get_process().Get_rank() << "] "
+    << std::right << Communicator::Get_rank() << "] "
     << msg
     << std::endl;
 }

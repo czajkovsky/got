@@ -5,23 +5,21 @@
 #include "waiting_process_priority_queue.h"
 #include "left_house_queue.h"
 #include "message.h"
+#include "communicator.h"
 #include <mpi.h>
 
 class ThiefProcess {
 public:
-  static ThiefProcess& Get_process() {
-    static ThiefProcess process;
-    return process;
-  }
-  void Run(unsigned int rank, Sizes sizes);
+  ThiefProcess(Sizes sizes);
+
+  void Run();
 
   unsigned int Increment_timestamp(unsigned int other_timestamp = 0);
 
-  unsigned int Get_rank() const { return rank_; }
+  unsigned int Get_rank() const { return communicator_.Get_rank(); }
   Sizes Get_sizes() const { return sizes_; }
 
 private:
-  ThiefProcess() {}
   ThiefProcess(const ThiefProcess&);
   ThiefProcess& operator=(const ThiefProcess&);
 
@@ -29,7 +27,6 @@ private:
   time_t sleep_start_;
   time_t house_sleep_start_;
 
-  unsigned int rank_;
   Sizes sizes_;
 
   enum QueueID {
@@ -40,6 +37,8 @@ private:
 
   static const unsigned int PAPERWORK_DURATION = 3;
   static const unsigned int BURGLARY_DURATION = 7;
+
+  Communicator communicator_;
 
   Message request_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message release_[Sizes::MAX_NUMBER_OF_THIEVES];
