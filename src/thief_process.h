@@ -44,13 +44,10 @@ private:
   Message release_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message confirm_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message partner_sync_;
-  Message docs_;
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request partner_request_;
-  MPI::Request docs_request_;
-  MPI::Request house_request_;
+  MPI::Request partner_sync_request_;
 
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue documentation_queue_;
@@ -64,9 +61,7 @@ private:
     REQUEST_TAG,
     CONFIRM_TAG,
     RELEASE_TAG,
-    PARTNER_TAG,
-    DOCS_TAG,
-    HOUSE_TAG
+    PARTNER_TAG
   };
 
   void (ThiefProcess::*state_)();
