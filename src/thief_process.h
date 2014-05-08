@@ -4,6 +4,7 @@
 #include "sizes.h"
 #include "waiting_process_priority_queue.h"
 #include "left_house_queue.h"
+#include "message.h"
 #include <mpi.h>
 
 class ThiefProcess {
@@ -31,14 +32,6 @@ private:
   unsigned int rank_;
   Sizes sizes_;
 
-  static const unsigned int MESSAGE_LENGTH = 4;
-  enum MessageFields {
-    RANK_FIELD,
-    TIMESTAMP_FIELD,
-    QUEUE_FIELD,
-    ENTRY_FIELD
-  };
-
   enum QueueID {
     PARTNERSHIP_Q_ID,
     DOCUMENTATION_Q_ID,
@@ -48,11 +41,11 @@ private:
   static const unsigned int PAPERWORK_DURATION = 3;
   static const unsigned int BURGLARY_DURATION = 7;
 
-  int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int partner_[MESSAGE_LENGTH];
-  int docs_[MESSAGE_LENGTH];
+  Message request_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message release_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message confirm_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message partner_sync_;
+  Message docs_;
   MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
   MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
