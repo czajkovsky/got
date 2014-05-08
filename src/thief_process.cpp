@@ -17,7 +17,6 @@ ThiefProcess::ThiefProcess(Sizes sizes)
 
 void ThiefProcess::Run() {
   sleep_start_ = time_t(-1);
-  house_sleep_start_ = time_t(-1);
 
   std::fill_n(house_entry_timestamp_, Sizes::MAX_NUMBER_OF_HOUSES, -1);
 
@@ -371,17 +370,17 @@ void ThiefProcess::House_wait_for_confirm() {
 
 void ThiefProcess::House_critical_section() {
   const int house_id = 0;
-  if (house_sleep_start_ == time_t(-1)) {
-    time(&house_sleep_start_);
+  if (sleep_start_ == time_t(-1)) {
+    time(&sleep_start_);
     LOG_INFO("has started robbing the house (critical section)")
   } else {
     time_t now;
     time(&now);
-    if (difftime(now, house_sleep_start_) > BURGLARY_DURATION) {
+    if (difftime(now, sleep_start_) > BURGLARY_DURATION) {
       LOG_INFO("has finished robbing the house")
       time_t expiration_time = now + 1;
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
-      house_sleep_start_ = time_t(-1);
+      sleep_start_ = time_t(-1);
       state_ = &ThiefProcess::House_notify_partner;
     }
   }

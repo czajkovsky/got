@@ -25,7 +25,6 @@ private:
 
   unsigned int timestamp_;
   time_t sleep_start_;
-  time_t house_sleep_start_;
 
   Sizes sizes_;
 
