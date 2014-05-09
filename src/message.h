@@ -9,7 +9,7 @@ public:
   Message(const Message&);
   Message& operator=(Message);
 
-  static const unsigned int MESSAGE_LENGTH = 4;
+  static const int MESSAGE_LENGTH = 4;
   enum MessageField {
     RANK_FIELD,
     TIMESTAMP_FIELD,

@@ -30,7 +30,7 @@ private:
 
   std::ostream& output_stream_;
 
-  const unsigned int DIGITS_IN_RANK;
+  const int DIGITS_IN_RANK;
 };
 
 #define LOG_DEBUG(msg) {\

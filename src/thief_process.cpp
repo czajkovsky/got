@@ -47,10 +47,10 @@ void ThiefProcess::Main_loop() {
 }
 
 void ThiefProcess::Try_communication() {
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++)  {
+  for (int i=0; i<Get_sizes().Get_number_of_thieves(); i++)  {
     if (i == Get_rank()) continue;
     if (communicator_.Test(i, Communicator::REQUEST_TAG)) {
-      unsigned int current_timestamp
+      int current_timestamp
         = Increment_timestamp(request_[i].Get(Message::TIMESTAMP_FIELD));
 
       if (request_[i].Get(Message::QUEUE_FIELD) == PARTNERSHIP_Q_ID) {
@@ -75,7 +75,7 @@ void ThiefProcess::Try_communication() {
       communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
     }
   }
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
+  for (int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     if (communicator_.Test(i, Communicator::RELEASE_TAG)) {
       Increment_timestamp(release_[i].Get(Message::TIMESTAMP_FIELD));
@@ -107,14 +107,14 @@ void ThiefProcess::Try_release_resources() {
 
     LOG_INFO("house " << left_house.Get_id() << " released")
 
-    unsigned int current_timestamp = Increment_timestamp();
+    int current_timestamp = Increment_timestamp();
 
     while (!waiting_houses_queue_[left_house.Get_id()].Empty()) {
       WaitingProcess wp = waiting_houses_queue_[left_house.Get_id()].Top();
      
       Message msg = Message()
-        .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-        .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
+        .Set(Message::RANK_FIELD, Get_rank())
+        .Set(Message::TIMESTAMP_FIELD, current_timestamp);
       communicator_.Send(wp.Get_rank(), msg, Communicator::CONFIRM_TAG);
 
       waiting_houses_queue_[left_house.Get_id()].Pop();
@@ -129,8 +129,8 @@ void ThiefProcess::Partnership_insert() {
   entry_timestamp_ = Increment_timestamp();
 
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, entry_timestamp_)
     .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID);
 
   communicator_.Send_all(msg, Communicator::REQUEST_TAG);
@@ -179,10 +179,10 @@ void ThiefProcess::Partnership_wait_for_partner() {
 }
 
 void ThiefProcess::Partnership_notify_partner() {
-  unsigned int current_timestamp = Increment_timestamp();
+  int current_timestamp = Increment_timestamp();
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, current_timestamp);
   communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   LOG_INFO("found partner: " << current_partner_rank_)
@@ -190,14 +190,14 @@ void ThiefProcess::Partnership_notify_partner() {
 }
 
 void ThiefProcess::Partnership_release() {
-  assert(static_cast<int>(Get_rank()) != current_partner_rank_);
+  assert(Get_rank() != current_partner_rank_);
   assert(current_partner_rank_ > -1);
 
-  unsigned int current_timestamp = Increment_timestamp();
+  int current_timestamp = Increment_timestamp();
 
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp))
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, current_timestamp)
     .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID)
     .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
@@ -217,8 +217,8 @@ void ThiefProcess::Docs_request_entry() {
   entry_timestamp_ = Increment_timestamp();
 
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, entry_timestamp_)
     .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID);
 
   communicator_.Send_all(msg, Communicator::REQUEST_TAG);
@@ -261,14 +261,14 @@ void ThiefProcess::Docs_critical_section() {
 void ThiefProcess::Docs_release() {
 
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()));
+    .Set(Message::RANK_FIELD, Get_rank());
   communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   Increment_timestamp();
 
   msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, entry_timestamp_)
     .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID)
     .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
@@ -303,9 +303,8 @@ void ThiefProcess::House_request_entry() {
     house_entry_timestamp_[house_id] = Increment_timestamp();
 
     Message msg = Message()
-      .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-      .Set(Message::TIMESTAMP_FIELD,
-        static_cast<int>(house_entry_timestamp_[house_id]))
+      .Set(Message::RANK_FIELD, Get_rank())
+      .Set(Message::TIMESTAMP_FIELD, house_entry_timestamp_[house_id])
       .Set(Message::QUEUE_FIELD, HOUSE_Q_ID+house_id)
       .Set(Message::ENTRY_FIELD, house_entry_timestamp_[house_id]);
 
@@ -349,17 +348,17 @@ void ThiefProcess::House_wait_for_partner() {
 }
 
 void ThiefProcess::House_notify_partner() {
-  unsigned int current_timestamp = Increment_timestamp();
+  int current_timestamp = Increment_timestamp();
   Message msg = Message()
-    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
+    .Set(Message::RANK_FIELD, Get_rank())
+    .Set(Message::TIMESTAMP_FIELD, current_timestamp);
 
   communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   state_ = &ThiefProcess::Partnership_insert;
 }
 
-unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
+int ThiefProcess::Increment_timestamp(int other_timestamp) {
   timestamp_ = std::max(timestamp_, other_timestamp) + 1;
   return timestamp_;
 }

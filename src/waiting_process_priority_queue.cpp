@@ -10,10 +10,10 @@ WaitingProcess WaitingProcessPriorityQueue::Insert(const WaitingProcess& wp) {
   return wp;
 }
 
-unsigned int WaitingProcessPriorityQueue::Position_of(const WaitingProcess& wp) const {
+int WaitingProcessPriorityQueue::Position_of(const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
-    return static_cast<unsigned int>(std::distance(collection_.begin(), found)) + 1;
+    return std::distance(collection_.begin(), found) + 1;
   } else {
     return 0;
   } 
@@ -52,7 +52,7 @@ bool WaitingProcessPriorityQueue::Is_on_top(const WaitingProcess& wp) const {
   }
 }
 
-bool WaitingProcessPriorityQueue::Is_in_top(unsigned int k, const WaitingProcess& wp) const {
+bool WaitingProcessPriorityQueue::Is_in_top(int k, const WaitingProcess& wp) const {
   std::set<WaitingProcess>::iterator found = collection_.find(wp);
   if (found != collection_.end()) {
     return (std::distance(collection_.begin(), found) < k);

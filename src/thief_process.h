@@ -15,7 +15,7 @@ public:
 
   void Run();
 
-  unsigned int Increment_timestamp(unsigned int other_timestamp = 0);
+  int Increment_timestamp(int other_timestamp = 0);
 
   int Get_rank() const { return communicator_.Get_rank(); }
   Sizes Get_sizes() const { return sizes_; }
@@ -24,7 +24,7 @@ private:
   ThiefProcess(const ThiefProcess&);
   ThiefProcess& operator=(const ThiefProcess&);
 
-  unsigned int timestamp_;
+  int timestamp_;
   TimePoint sleep_start_;
 
   Sizes sizes_;
@@ -35,8 +35,8 @@ private:
     HOUSE_Q_ID
   };
 
-  static const unsigned int PAPERWORK_DURATION = 3;
-  static const unsigned int BURGLARY_DURATION = 7;
+  static const int PAPERWORK_DURATION = 3;
+  static const int BURGLARY_DURATION = 7;
 
   Communicator communicator_;
 
@@ -50,7 +50,7 @@ private:
   WaitingProcessPriorityQueue waiting_houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
   LeftHouseQueue left_houses_queue_;
 
-  unsigned int entry_timestamp_;
+  int entry_timestamp_;
   int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];
 
   void (ThiefProcess::*state_)();
