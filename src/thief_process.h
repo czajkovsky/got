@@ -4,40 +4,30 @@
 #include "sizes.h"
 #include "waiting_process_priority_queue.h"
 #include "left_house_queue.h"
+#include "message.h"
+#include "communicator.h"
+#include "time_point.h"
 #include <mpi.h>
 
 class ThiefProcess {
 public:
-  static ThiefProcess& Get_process() {
-    static ThiefProcess process;
-    return process;
-  }
-  void Run(unsigned int rank, Sizes sizes);
+  ThiefProcess(Sizes sizes);
 
-  unsigned int Increment_timestamp(unsigned int other_timestamp = 0);
+  void Run();
 
-  unsigned int Get_rank() const { return rank_; }
+  int Increment_timestamp(int other_timestamp = 0);
+
+  int Get_rank() const { return communicator_.Get_rank(); }
   Sizes Get_sizes() const { return sizes_; }
 
 private:
-  ThiefProcess() {}
   ThiefProcess(const ThiefProcess&);
   ThiefProcess& operator=(const ThiefProcess&);
 
-  unsigned int timestamp_;
-  time_t sleep_start_;
-  time_t house_sleep_start_;
+  int timestamp_;
+  TimePoint sleep_start_;
 
-  unsigned int rank_;
   Sizes sizes_;
-
-  static const unsigned int MESSAGE_LENGTH = 4;
-  enum MessageFields {
-    RANK_FIELD,
-    TIMESTAMP_FIELD,
-    QUEUE_FIELD,
-    ENTRY_FIELD
-  };
 
   enum QueueID {
     PARTNERSHIP_Q_ID,
@@ -45,37 +35,23 @@ private:
     HOUSE_Q_ID
   };
 
-  static const unsigned int PAPERWORK_DURATION = 3;
-  static const unsigned int BURGLARY_DURATION = 7;
+  static const int PAPERWORK_DURATION = 3;
+  static const int BURGLARY_DURATION = 7;
 
-  int requests_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int releases_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int confirms_[Sizes::MAX_NUMBER_OF_THIEVES][MESSAGE_LENGTH];
-  int partner_[MESSAGE_LENGTH];
-  int docs_[MESSAGE_LENGTH];
-  MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request partner_request_;
-  MPI::Request docs_request_;
-  MPI::Request house_request_;
+  Communicator communicator_;
+
+  Message request_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message release_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message confirm_[Sizes::MAX_NUMBER_OF_THIEVES];
+  Message partner_sync_;
 
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue documentation_queue_;
   WaitingProcessPriorityQueue waiting_houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
   LeftHouseQueue left_houses_queue_;
 
-  unsigned int entry_timestamp_;
+  int entry_timestamp_;
   int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];
-
-  enum CommunicationTAG {
-    REQUEST_TAG,
-    CONFIRM_TAG,
-    RELEASE_TAG,
-    PARTNER_TAG,
-    DOCS_TAG,
-    HOUSE_TAG
-  };
 
   void (ThiefProcess::*state_)();
 
@@ -104,8 +80,6 @@ private:
   void House_notify_partner();
 
   int current_partner_rank_;
-
-  void Broadcast(int msg[], int tag_type);
 
   void Set_up_communication();
   void Main_loop();

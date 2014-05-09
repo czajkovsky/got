@@ -1,10 +1,10 @@
 #include "left_house.h"
 
 #include <ostream>
-#include <ctime>
 #include <algorithm>
+#include "time_point.h"
 
-LeftHouse::LeftHouse(unsigned int id, time_t expiration_time)
+LeftHouse::LeftHouse(int id, TimePoint expiration_time)
   : id_(id), expiration_time_(expiration_time) {
 }
 

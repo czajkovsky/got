@@ -6,7 +6,7 @@
 
 class Sizes {
 public:
-  Sizes(unsigned int number_of_thieves, unsigned int number_of_desks, unsigned int number_of_houses)
+  Sizes(int number_of_thieves, int number_of_desks, int number_of_houses)
     : number_of_thieves_(number_of_thieves),
       number_of_desks_(number_of_desks),
       number_of_houses_(number_of_houses) {
@@ -34,18 +34,18 @@ public:
     return *this;
   }
 
-  unsigned int Get_number_of_thieves() { return number_of_thieves_; }
-  unsigned int Get_number_of_desks() { return number_of_desks_; }
-  unsigned int Get_number_of_houses() { return number_of_houses_; }
+  int Get_number_of_thieves() { return number_of_thieves_; }
+  int Get_number_of_desks() { return number_of_desks_; }
+  int Get_number_of_houses() { return number_of_houses_; }
 
-  static const unsigned int MAX_NUMBER_OF_THIEVES = 10;
-  static const unsigned int MAX_NUMBER_OF_DESKS = 100;
-  static const unsigned int MAX_NUMBER_OF_HOUSES = 100;
+  static const int MAX_NUMBER_OF_THIEVES = 10;
+  static const int MAX_NUMBER_OF_DESKS = 100;
+  static const int MAX_NUMBER_OF_HOUSES = 100;
 
 private:
-  unsigned int number_of_thieves_;
-  unsigned int number_of_desks_;
-  unsigned int number_of_houses_;
+  int number_of_thieves_;
+  int number_of_desks_;
+  int number_of_houses_;
 };
 
 #endif  // SIZES_H_

@@ -3,7 +3,7 @@
 #include <ostream>
 #include <algorithm>
 
-WaitingProcess::WaitingProcess(unsigned int timestamp, int rank)
+WaitingProcess::WaitingProcess(int timestamp, int rank)
   : timestamp_(timestamp), rank_(rank) {
 }
 
