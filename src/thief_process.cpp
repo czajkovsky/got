@@ -33,10 +33,8 @@ void ThiefProcess::Run() {
 }
 
 void ThiefProcess::Set_up_communication() {
-  communicator_.Irecv_all(
-    request_, Communicator::REQUEST_TAG, request_requests_);
-  communicator_.Irecv_all(
-    release_, Communicator::RELEASE_TAG, release_requests_);
+  communicator_.Irecv_all(request_, Communicator::REQUEST_TAG);
+  communicator_.Irecv_all(release_, Communicator::RELEASE_TAG);
 }
 
 void ThiefProcess::Main_loop() {
@@ -50,7 +48,7 @@ void ThiefProcess::Main_loop() {
 void ThiefProcess::Try_communication() {
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++)  {
     if (i == Get_rank()) continue;
-    if (request_requests_[i].Test()) {
+    if (communicator_.Test(i, Communicator::REQUEST_TAG)) {
       unsigned int current_timestamp
         = Increment_timestamp(request_[i].Get(Message::TIMESTAMP_FIELD));
 
@@ -64,23 +62,21 @@ void ThiefProcess::Try_communication() {
           WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)) < WaitingProcess(house_entry_timestamp_[house_id], Get_rank())) {
         } else {
           waiting_houses_queue_[house_id].Insert(WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)));
-        request_requests_[i] = MPI::COMM_WORLD.Irecv(
-          request_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, REQUEST_TAG);
+          communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
           continue;
         }
       }
 
       request_[i].Set(Message::TIMESTAMP_FIELD, current_timestamp);
-      MPI::COMM_WORLD.Send(
-        request_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT,
-        request_[i].Get(Message::RANK_FIELD), CONFIRM_TAG);
+      communicator_.Send(request_[i].Get(Message::RANK_FIELD),
+        request_[i], Communicator::CONFIRM_TAG);
 
-      request_requests_[i] = communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
+      communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
     }
   }
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
-    if (release_requests_[i].Test()) {
+    if (communicator_.Test(i, Communicator::RELEASE_TAG)) {
       Increment_timestamp(release_[i].Get(Message::TIMESTAMP_FIELD));
 
       if (release_[i].Get(Message::QUEUE_FIELD) == PARTNERSHIP_Q_ID) {
@@ -96,7 +92,7 @@ void ThiefProcess::Try_communication() {
         );
       }
 
-      release_requests_[i] = MPI::COMM_WORLD.Irecv(release_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, RELEASE_TAG);
+      communicator_.Irecv(i, &release_[i], Communicator::RELEASE_TAG);
     }
   }
 }
@@ -118,8 +114,7 @@ void ThiefProcess::Try_release_resources() {
       Message msg = Message()
         .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
         .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
-      MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH,
-        MPI_INT, wp.Get_rank(), CONFIRM_TAG);
+      communicator_.Send(wp.Get_rank(), msg, Communicator::CONFIRM_TAG);
 
       waiting_houses_queue_[left_house.Get_id()].Pop();
     }
@@ -137,27 +132,17 @@ void ThiefProcess::Partnership_insert() {
     .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
     .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID);
 
-  ThiefProcess::Broadcast(msg.To_array(), REQUEST_TAG);
+  communicator_.Send_all(msg, Communicator::REQUEST_TAG);
 
   partnership_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
 
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirm_[i].To_array(),
-      Message::MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
-  }
+  communicator_.Irecv_all(confirm_, Communicator::CONFIRM_TAG);
 
   state_ = &ThiefProcess::Partnership_wait_for_confirm;
 }
 
 void ThiefProcess::Partnership_wait_for_confirm() {
-  bool confirmed = true;
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    if (!confirm_requests_[i].Test()) {
-      confirmed = false;
-    }
-  }
+  bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
   if (confirmed) {
     state_ = &ThiefProcess::Partnership_wait_for_top;
   }
@@ -174,8 +159,8 @@ void ThiefProcess::Partnership_critical_section() {
 
   if (partnership_queue_.Position_of(WaitingProcess(entry_timestamp_, Get_rank())) % 2 == 1) {
     Increment_timestamp();
-    partner_sync_request_ = MPI::COMM_WORLD.Irecv(partner_sync_.To_array(),
-      Message::MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
+    communicator_.Irecv(Communicator::ANY_SOURCE,
+      &partner_sync_, Communicator::PARTNER_TAG);
     state_ = &ThiefProcess::Partnership_wait_for_partner;
   } else {
     current_partner_rank_ = partnership_queue_.Before(WaitingProcess(entry_timestamp_, Get_rank())).Get_rank();
@@ -184,7 +169,7 @@ void ThiefProcess::Partnership_critical_section() {
 }
 
 void ThiefProcess::Partnership_wait_for_partner() {
-  if (partner_sync_request_.Test()) {
+  if (communicator_.Test(Communicator::ANY_SOURCE, Communicator::PARTNER_TAG)) {
     Increment_timestamp(partner_sync_.Get(Message::TIMESTAMP_FIELD));
     current_partner_rank_ = partner_sync_.Get(Message::RANK_FIELD);
     LOG_INFO("received partner: " << current_partner_rank_)
@@ -197,8 +182,7 @@ void ThiefProcess::Partnership_notify_partner() {
   Message msg = Message()
     .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
     .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
-
-  MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
+  communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   LOG_INFO("found partner: " << current_partner_rank_)
   state_ = &ThiefProcess::Docs_start_waiting_for_partner;
@@ -218,8 +202,7 @@ void ThiefProcess::Partnership_release() {
       .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID)
       .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
-    MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH,
-      MPI_INT, i, RELEASE_TAG);
+    communicator_.Send(i, msg, Communicator::RELEASE_TAG);
   }
 
   partnership_queue_.Erase(
@@ -240,26 +223,20 @@ void ThiefProcess::Docs_request_entry() {
     .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
     .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID);
 
-  ThiefProcess::Broadcast(msg.To_array(), REQUEST_TAG);
+  communicator_.Send_all(msg, Communicator::REQUEST_TAG);
 
   documentation_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
 
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
-    confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirm_[i].To_array(), Message::MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
+    communicator_.Irecv(i, &confirm_[i], Communicator::CONFIRM_TAG);
   }
 
   state_ = &ThiefProcess::Docs_wait_for_confirm;
 }
 
 void ThiefProcess::Docs_wait_for_confirm() {
-  bool confirmed = true;
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    if (!confirm_requests_[i].Test()) {
-      confirmed = false;
-    }
-  }
+  bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
   if (confirmed) {
     state_ = &ThiefProcess::Docs_wait_for_top;
   }
@@ -291,8 +268,7 @@ void ThiefProcess::Docs_release() {
 
   Message msg = Message()
     .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()));
-  MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH,
-    MPI_INT, current_partner_rank_, PARTNER_TAG);
+  communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
@@ -304,27 +280,26 @@ void ThiefProcess::Docs_release() {
       .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID)
       .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
-    MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH,
-      MPI_INT, i, RELEASE_TAG);
+    communicator_.Send(i, msg, Communicator::RELEASE_TAG);
   }
 
   documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
 
   LOG_INFO("has started waiting for finishing burglary")
-  partner_sync_request_ = MPI::COMM_WORLD.Irecv(partner_sync_.To_array(),
-    Message::MESSAGE_LENGTH, MPI_INT, current_partner_rank_, PARTNER_TAG);
+  communicator_.Irecv(current_partner_rank_,
+    &partner_sync_, Communicator::PARTNER_TAG);
   state_ = &ThiefProcess::House_wait_for_partner;
 }
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
   LOG_INFO("has started waiting for the docs")
-  partner_sync_request_ = MPI::COMM_WORLD.Irecv(partner_sync_.To_array(),
-    Message::MESSAGE_LENGTH, MPI_INT, MPI_ANY_SOURCE, PARTNER_TAG);
+  communicator_.Irecv(Communicator::ANY_SOURCE,
+    &partner_sync_, Communicator::PARTNER_TAG);
   state_ = &ThiefProcess::Docs_wait_for_partner;
 }
 
 void ThiefProcess::Docs_wait_for_partner() {
-  if (partner_sync_request_.Test()) {
+  if (communicator_.Test(Communicator::ANY_SOURCE, Communicator::PARTNER_TAG)) {
     LOG_INFO(current_partner_rank_ << " - has filled the docs")
     state_ = &ThiefProcess::House_request_entry;
   }
@@ -343,12 +318,11 @@ void ThiefProcess::House_request_entry() {
       .Set(Message::QUEUE_FIELD, HOUSE_Q_ID+house_id)
       .Set(Message::ENTRY_FIELD, house_entry_timestamp_[house_id]);
 
-    Broadcast(msg.To_array(), REQUEST_TAG);
+    communicator_.Send_all(msg, Communicator::REQUEST_TAG);
 
     for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
       if (i == Get_rank()) continue;
-      confirm_requests_[i] = MPI::COMM_WORLD.Irecv(confirm_[i].To_array(),
-        Message::MESSAGE_LENGTH, MPI_INT, i, CONFIRM_TAG);
+      communicator_.Irecv(i, &confirm_[i], Communicator::CONFIRM_TAG);
     }
 
     state_ = &ThiefProcess::House_wait_for_confirm;
@@ -356,13 +330,7 @@ void ThiefProcess::House_request_entry() {
 }
 
 void ThiefProcess::House_wait_for_confirm() {
-  bool confirmed = true;
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    if (!confirm_requests_[i].Test()) {
-      confirmed = false;
-    }
-  }
+  bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
   if (confirmed) {
     state_ = &ThiefProcess::House_critical_section;
   }
@@ -387,7 +355,7 @@ void ThiefProcess::House_critical_section() {
 }
 
 void ThiefProcess::House_wait_for_partner() {
-  if (partner_sync_request_.Test()) {
+  if (communicator_.Test(current_partner_rank_, Communicator::PARTNER_TAG)) {
     Increment_timestamp(partner_sync_.Get(Message::TIMESTAMP_FIELD));
     LOG_INFO("received house info")
     state_ = &ThiefProcess::Partnership_insert;
@@ -400,8 +368,7 @@ void ThiefProcess::House_notify_partner() {
     .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
     .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp));
 
-  MPI::COMM_WORLD.Send(msg.To_array(), Message::MESSAGE_LENGTH,
-    MPI_INT, current_partner_rank_, PARTNER_TAG);
+  communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
   state_ = &ThiefProcess::Partnership_insert;
 }
@@ -411,9 +378,3 @@ unsigned int ThiefProcess::Increment_timestamp(unsigned int other_timestamp) {
   return timestamp_;
 }
 
-void ThiefProcess::Broadcast(int msg[], int tag_type) {
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    MPI::COMM_WORLD.Send(msg, Message::MESSAGE_LENGTH, MPI_INT, i, tag_type);
-  }
-}

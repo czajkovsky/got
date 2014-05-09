@@ -16,7 +16,7 @@ public:
 
   unsigned int Increment_timestamp(unsigned int other_timestamp = 0);
 
-  unsigned int Get_rank() const { return communicator_.Get_rank(); }
+  int Get_rank() const { return communicator_.Get_rank(); }
   Sizes Get_sizes() const { return sizes_; }
 
 private:
@@ -43,10 +43,6 @@ private:
   Message release_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message confirm_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message partner_sync_;
-  MPI::Request request_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request release_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request confirm_requests_[Sizes::MAX_NUMBER_OF_THIEVES];
-  MPI::Request partner_sync_request_;
 
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue documentation_queue_;
@@ -55,13 +51,6 @@ private:
 
   unsigned int entry_timestamp_;
   int house_entry_timestamp_[Sizes::MAX_NUMBER_OF_HOUSES];
-
-  enum CommunicationTAG {
-    REQUEST_TAG,
-    CONFIRM_TAG,
-    RELEASE_TAG,
-    PARTNER_TAG
-  };
 
   void (ThiefProcess::*state_)();
 
@@ -90,8 +79,6 @@ private:
   void House_notify_partner();
 
   int current_partner_rank_;
-
-  void Broadcast(int msg[], int tag_type);
 
   void Set_up_communication();
   void Main_loop();
