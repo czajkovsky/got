@@ -21,6 +21,18 @@ TimePoint TimePoint::Now() {
   return TimePoint(time(NULL));
 }
 
+TimePoint TimePoint::Uninitialized() {
+  return TimePoint(static_cast<time_t>(-1));
+}
+
+void TimePoint::Reset() {
+  time_point_ = static_cast<time_t>(-1);
+}
+
+bool TimePoint::Is_initialized() const {
+  return time_point_ != static_cast<time_t>(-1);
+}
+
 bool TimePoint::Has_expired() const {
   return TimePoint::Now() >= *this;
 }

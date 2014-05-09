@@ -12,7 +12,11 @@ public:
   TimePoint& operator=(TimePoint);
 
   static TimePoint Now();
+  static TimePoint Uninitialized();
 
+  void Reset();
+
+  bool Is_initialized() const;
   bool Has_expired() const;
 
   TimePoint& operator+=(Duration);
