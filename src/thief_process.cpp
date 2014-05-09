@@ -276,14 +276,14 @@ void ThiefProcess::Docs_release() {
 
   documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
 
-  LOG_INFO("has started waiting for finishing burglary")
+  LOG_DEBUG("has started waiting for finishing burglary")
   communicator_.Irecv(current_partner_rank_,
     &partner_sync_, Communicator::PARTNER_TAG);
   state_ = &ThiefProcess::House_wait_for_partner;
 }
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
-  LOG_INFO("has started waiting for the docs")
+  LOG_DEBUG("has started waiting for the docs")
   communicator_.Irecv(Communicator::ANY_SOURCE,
     &partner_sync_, Communicator::PARTNER_TAG);
   state_ = &ThiefProcess::Docs_wait_for_partner;
@@ -291,7 +291,7 @@ void ThiefProcess::Docs_start_waiting_for_partner() {
 
 void ThiefProcess::Docs_wait_for_partner() {
   if (communicator_.Test(Communicator::ANY_SOURCE, Communicator::PARTNER_TAG)) {
-    LOG_INFO(current_partner_rank_ << " - has filled the docs")
+    LOG_DEBUG(current_partner_rank_ << " - has filled the docs")
     state_ = &ThiefProcess::House_request_entry;
   }
 }
