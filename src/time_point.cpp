@@ -3,6 +3,7 @@
 #include <ctime>
 #include <ostream>
 #include <algorithm>
+#include <cassert>
 
 TimePoint::TimePoint(time_t time_point) 
   : time_point_(time_point) {
@@ -34,45 +35,62 @@ bool TimePoint::Is_initialized() const {
 }
 
 bool TimePoint::Has_expired() const {
+  assert(Is_initialized());
   return TimePoint::Now() >= *this;
 }
 
 TimePoint& TimePoint::operator+=(Duration duration) {
+  assert(Is_initialized());
   time_point_ += static_cast<time_t>(duration);
   return *this;
 }
 
 TimePoint operator+(const TimePoint& tp, Duration duration) {
+  assert(tp.Is_initialized());
   TimePoint res(tp);
   res += duration;
   return res;
 }
 
 bool TimePoint::operator==(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) == 0.0;
 }
 
 bool TimePoint::operator!=(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) != 0.0;
 }
 
 bool TimePoint::operator<(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) < 0.0;
 }
 
 bool TimePoint::operator<=(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) <= 0.0;
 }
 
 bool TimePoint::operator>(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) > 0.0;
 }
 
 bool TimePoint::operator>=(const TimePoint& tp) const {
+  assert(Is_initialized());
+  assert(tp.Is_initialized());
   return difftime(time_point_, tp.time_point_) >= 0.0;
 }
 
 std::ostream& operator<<(std::ostream& out, const TimePoint& tp) {
+  assert(tp.Is_initialized());
+
   struct tm tstruct;
   char buf[80];
   tstruct = *localtime(&tp.time_point_);
