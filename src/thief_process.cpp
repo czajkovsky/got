@@ -9,14 +9,16 @@
 #include "communicator.h"
 #include "logger.h"
 #include "sizes.h"
+#include "time_point.h"
 
 ThiefProcess::ThiefProcess(Sizes sizes)
-  : sizes_(sizes),
+  : sleep_start_(TimePoint::Uninitialized()),
+    sizes_(sizes),
     communicator_() {
 }
 
 void ThiefProcess::Run() {
-  sleep_start_ = time_t(-1);
+  sleep_start_ = TimePoint::Uninitialized();
 
   std::fill_n(house_entry_timestamp_, Sizes::MAX_NUMBER_OF_HOUSES, -1);
 
@@ -244,15 +246,14 @@ void ThiefProcess::Docs_wait_for_top() {
 }
 
 void ThiefProcess::Docs_critical_section() {
-  if (sleep_start_ == time_t(-1)) {
-    time(&sleep_start_);
+  if (!sleep_start_.Is_initialized()) {
+    sleep_start_ = TimePoint::Now();
     LOG_INFO("has started filling the docs (critical section)")
   } else {
-    time_t now;
-    time(&now);
-    if (difftime(now, sleep_start_) > PAPERWORK_DURATION) {
+    TimePoint paperwork_end = sleep_start_ + Duration(PAPERWORK_DURATION);
+    if (paperwork_end.Has_expired()) {
       LOG_INFO("has finished filling the docs")
-      sleep_start_ = time_t(-1);
+      sleep_start_.Reset();
       state_ = &ThiefProcess::Docs_release;
     }
   }
@@ -325,17 +326,16 @@ void ThiefProcess::House_wait_for_confirm() {
 
 void ThiefProcess::House_critical_section() {
   const int house_id = 0;
-  if (sleep_start_ == time_t(-1)) {
-    time(&sleep_start_);
+  if (!sleep_start_.Is_initialized()) {
+    sleep_start_ = TimePoint::Now();
     LOG_INFO("has started robbing the house (critical section)")
   } else {
-    time_t now;
-    time(&now);
-    if (difftime(now, sleep_start_) > BURGLARY_DURATION) {
+    TimePoint burglary_end = sleep_start_ + Duration(BURGLARY_DURATION);
+    if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
-      time_t expiration_time = now + 1;
+      time_t expiration_time = time(NULL) + 1;
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
-      sleep_start_ = time_t(-1);
+      sleep_start_ = TimePoint::Now();
       state_ = &ThiefProcess::House_notify_partner;
     }
   }

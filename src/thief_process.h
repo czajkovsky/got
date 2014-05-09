@@ -6,6 +6,7 @@
 #include "left_house_queue.h"
 #include "message.h"
 #include "communicator.h"
+#include "time_point.h"
 #include <mpi.h>
 
 class ThiefProcess {
@@ -24,7 +25,7 @@ private:
   ThiefProcess& operator=(const ThiefProcess&);
 
   unsigned int timestamp_;
-  time_t sleep_start_;
+  TimePoint sleep_start_;
 
   Sizes sizes_;
 
