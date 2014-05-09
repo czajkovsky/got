@@ -4,15 +4,15 @@
 #include <ostream>
 #include <iostream>
 #include <iomanip>
-#include <ctime>
 #include <cmath>
 
 #include "sizes.h"
 #include "communicator.h"
+#include "time_point.h"
 
 void Logger::Log(MESSAGE_LEVEL message_level, const std::string& msg) {
   output_stream_ << std::left
-    << Get_current_time() << " "
+    << TimePoint::Now() << " "
     << Message_level_to_string(message_level) << " "
     << "[" << std::setw(DIGITS_IN_RANK) << std::setfill('0')
     << std::right << Communicator::Get_rank() << "] "
@@ -44,14 +44,4 @@ std::string Logger::Message_level_to_string(MESSAGE_LEVEL message_level) {
     translated_level = "-----";
   }
   return translated_level;
-}
-
-std::string Logger::Get_current_time() {
-  time_t now = time(0);
-  struct tm  tstruct;
-  char buf[80];
-  tstruct = *localtime(&now);
-  strftime(buf, sizeof(buf), "%X", &tstruct);
-
-  return std::string(buf);
 }

@@ -28,8 +28,6 @@ private:
   Logger(const Logger&);
   Logger& operator=(const Logger&);
 
-  static std::string Get_current_time();
-
   std::ostream& output_stream_;
 
   const unsigned int DIGITS_IN_RANK;
