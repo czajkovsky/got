@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <mpi.h>
-#include <ctime>
 
 #include "message.h"
 #include "communicator.h"
@@ -103,7 +102,7 @@ void ThiefProcess::Try_release_resources() {
   time_t now;
   time(&now);
   while (!left_houses_queue_.Empty() &&
-      left_houses_queue_.Front().Get_expiration_time() <= now) {
+      left_houses_queue_.Front().Get_expiration_time().Has_expired()) {
     LeftHouse left_house = left_houses_queue_.Front();
 
     LOG_INFO("house " << left_house.Get_id() << " released")
@@ -333,7 +332,7 @@ void ThiefProcess::House_critical_section() {
     TimePoint burglary_end = sleep_start_ + Duration(BURGLARY_DURATION);
     if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
-      time_t expiration_time = time(NULL) + 1;
+      TimePoint expiration_time = TimePoint::Now() + Duration(1);
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
       sleep_start_ = TimePoint::Now();
       state_ = &ThiefProcess::House_notify_partner;
