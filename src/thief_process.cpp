@@ -192,18 +192,15 @@ void ThiefProcess::Partnership_release() {
   assert(static_cast<int>(Get_rank()) != current_partner_rank_);
   assert(current_partner_rank_ > -1);
 
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    unsigned int current_timestamp = Increment_timestamp();
+  unsigned int current_timestamp = Increment_timestamp();
 
-    Message msg = Message()
-      .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-      .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp))
-      .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID)
-      .Set(Message::ENTRY_FIELD, entry_timestamp_);
+  Message msg = Message()
+    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
+    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(current_timestamp))
+    .Set(Message::QUEUE_FIELD, PARTNERSHIP_Q_ID)
+    .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
-    communicator_.Send(i, msg, Communicator::RELEASE_TAG);
-  }
+  communicator_.Send_all(msg, Communicator::RELEASE_TAG);
 
   partnership_queue_.Erase(
     partnership_queue_.After(WaitingProcess(entry_timestamp_, Get_rank()))
@@ -227,10 +224,7 @@ void ThiefProcess::Docs_request_entry() {
 
   documentation_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
 
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    communicator_.Irecv(i, &confirm_[i], Communicator::CONFIRM_TAG);
-  }
+  communicator_.Irecv_all(confirm_, Communicator::CONFIRM_TAG);
 
   state_ = &ThiefProcess::Docs_wait_for_confirm;
 }
@@ -270,18 +264,15 @@ void ThiefProcess::Docs_release() {
     .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()));
   communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
-  for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-    if (i == Get_rank()) continue;
-    Increment_timestamp();
+  Increment_timestamp();
 
-    Message msg = Message()
-      .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
-      .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
-      .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID)
-      .Set(Message::ENTRY_FIELD, entry_timestamp_);
+  msg = Message()
+    .Set(Message::RANK_FIELD, static_cast<int>(Get_rank()))
+    .Set(Message::TIMESTAMP_FIELD, static_cast<int>(entry_timestamp_))
+    .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID)
+    .Set(Message::ENTRY_FIELD, entry_timestamp_);
 
-    communicator_.Send(i, msg, Communicator::RELEASE_TAG);
-  }
+  communicator_.Send_all(msg, Communicator::RELEASE_TAG);
 
   documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
 
@@ -319,11 +310,7 @@ void ThiefProcess::House_request_entry() {
       .Set(Message::ENTRY_FIELD, house_entry_timestamp_[house_id]);
 
     communicator_.Send_all(msg, Communicator::REQUEST_TAG);
-
-    for (unsigned int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
-      if (i == Get_rank()) continue;
-      communicator_.Irecv(i, &confirm_[i], Communicator::CONFIRM_TAG);
-    }
+    communicator_.Irecv_all(confirm_, Communicator::CONFIRM_TAG);
 
     state_ = &ThiefProcess::House_wait_for_confirm;
   }
