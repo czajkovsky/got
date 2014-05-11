@@ -7,7 +7,6 @@
 #include "message.h"
 #include "communicator.h"
 #include "time_point.h"
-#include <mpi.h>
 
 class ThiefProcess {
 public:
@@ -46,7 +45,6 @@ private:
   Message partner_sync_;
 
   WaitingProcessPriorityQueue partnership_queue_;
-  WaitingProcessPriorityQueue documentation_queue_;
   WaitingProcessPriorityQueue waiting_houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
   LeftHouseQueue left_houses_queue_;
 
@@ -64,12 +62,8 @@ private:
   void Partnership_wait_for_partner();
   void Partnership_notify_partner();
 
-  void Docs_request_entry();
-  void Docs_wait_for_confirm();
   void Docs_wait_for_top();
   void Docs_critical_section();
-  void Docs_release();
-
   void Docs_wait_for_partner();
   void Docs_start_waiting_for_partner();
 

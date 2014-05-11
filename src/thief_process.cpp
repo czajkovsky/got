@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <mpi.h>
 
 #include "message.h"
 #include "communicator.h"
@@ -94,8 +93,6 @@ void ThiefProcess::Try_communication() {
 }
 
 void ThiefProcess::Try_release_resources() {
-  time_t now;
-  time(&now);
   while (!left_houses_queue_.Empty() &&
       left_houses_queue_.Front().Get_expiration_time().Has_expired()) {
     LeftHouse left_house = left_houses_queue_.Front();
