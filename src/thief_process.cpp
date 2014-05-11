@@ -282,7 +282,7 @@ void ThiefProcess::House_critical_section() {
     TimePoint burglary_end = sleep_start_ + Duration(BURGLARY_DURATION);
     if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
-      TimePoint expiration_time = TimePoint::Now() + Duration(1);
+      TimePoint expiration_time = TimePoint::Now() + Duration(HOUSE_QUARANTINE_DURATION);
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
       sleep_start_ = TimePoint::Now();
       state_ = &ThiefProcess::House_notify_partner;

@@ -36,6 +36,7 @@ private:
 
   static const int PAPERWORK_DURATION = 3;
   static const int BURGLARY_DURATION = 7;
+  static const int HOUSE_QUARANTINE_DURATION = 3;
 
   Communicator communicator_;
 
