@@ -248,7 +248,8 @@ void ThiefProcess::Docs_wait_for_partner() {
 }
 
 void ThiefProcess::House_request_entry() {
-  const int house_id = 0;  // TODO change it
+  srand(time(NULL));
+  const int house_id = rand() % Get_sizes().Get_number_of_desks();
   if (house_entry_timestamp_[house_id] == -1) {
     LOG_DEBUG("requests entry to " << house_id << " house")
     house_entry_timestamp_[house_id] = Increment_timestamp();
@@ -282,7 +283,7 @@ void ThiefProcess::House_critical_section() {
     TimePoint burglary_end = sleep_start_ + Duration(BURGLARY_DURATION);
     if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
-      TimePoint expiration_time = TimePoint::Now() + Duration(1);
+      TimePoint expiration_time = TimePoint::Now() + Duration(HOUSE_QUARANTINE_DURATION);
       left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
       sleep_start_ = TimePoint::Now();
       state_ = &ThiefProcess::House_notify_partner;
