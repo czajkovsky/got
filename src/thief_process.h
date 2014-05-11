@@ -31,7 +31,6 @@ private:
 
   enum QueueID {
     PARTNERSHIP_Q_ID,
-    DOCUMENTATION_Q_ID,
     HOUSE_Q_ID
   };
 
@@ -76,6 +75,7 @@ private:
   void House_request_entry();
   void House_wait_for_confirm();
   void House_critical_section();
+  void House_start_waiting_for_partner();
   void House_wait_for_partner();
   void House_notify_partner();
 

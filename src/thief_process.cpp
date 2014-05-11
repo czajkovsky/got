@@ -56,8 +56,6 @@ void ThiefProcess::Try_communication() {
 
       if (request_[i].Get(Message::QUEUE_FIELD) == PARTNERSHIP_Q_ID) {
         partnership_queue_.Insert(WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)));
-      } else if (request_[i].Get(Message::QUEUE_FIELD) == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Insert(WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)));
       } else {
         const int house_id = request_[i].Get(Message::QUEUE_FIELD) - HOUSE_Q_ID;
         if (house_entry_timestamp_[house_id] == -1 ||
@@ -88,10 +86,6 @@ void ThiefProcess::Try_communication() {
         partnership_queue_.Erase(
           WaitingProcess(release_[i].Get(Message::ENTRY_FIELD), release_[i].Get(Message::RANK_FIELD))
         );
-      } else if (release_[i].Get(Message::QUEUE_FIELD) == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Erase(
-          WaitingProcess(release_[i].Get(Message::ENTRY_FIELD), release_[i].Get(Message::RANK_FIELD))
-        );
       }
 
       communicator_.Irecv(i, &release_[i], Communicator::RELEASE_TAG);
@@ -112,7 +106,7 @@ void ThiefProcess::Try_release_resources() {
 
     while (!waiting_houses_queue_[left_house.Get_id()].Empty()) {
       WaitingProcess wp = waiting_houses_queue_[left_house.Get_id()].Top();
-     
+
       Message msg = Message()
         .Set(Message::RANK_FIELD, Get_rank())
         .Set(Message::TIMESTAMP_FIELD, current_timestamp);
@@ -175,7 +169,7 @@ void ThiefProcess::Partnership_wait_for_partner() {
     Increment_timestamp(partner_sync_.Get(Message::TIMESTAMP_FIELD));
     current_partner_rank_ = partner_sync_.Get(Message::RANK_FIELD);
     LOG_INFO("received partner: " << current_partner_rank_)
-    state_ = &ThiefProcess::Partnership_release;
+    state_ = &ThiefProcess::Docs_wait_for_top;
   }
 }
 
@@ -211,36 +205,16 @@ void ThiefProcess::Partnership_release() {
     WaitingProcess(entry_timestamp_, Get_rank())
   );
 
-  state_ = &ThiefProcess::Docs_request_entry;
-}
+  msg = Message()
+    .Set(Message::RANK_FIELD, Get_rank());
+  communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
 
-void ThiefProcess::Docs_request_entry() {
-  entry_timestamp_ = Increment_timestamp();
-
-  Message msg = Message()
-    .Set(Message::RANK_FIELD, Get_rank())
-    .Set(Message::TIMESTAMP_FIELD, entry_timestamp_)
-    .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID);
-
-  communicator_.Send_all(msg, Communicator::REQUEST_TAG);
-
-  documentation_queue_.Insert(WaitingProcess(entry_timestamp_, Get_rank()));
-
-  communicator_.Irecv_all(confirm_, Communicator::CONFIRM_TAG);
-
-  state_ = &ThiefProcess::Docs_wait_for_confirm;
-}
-
-void ThiefProcess::Docs_wait_for_confirm() {
-  bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
-  if (confirmed) {
-    state_ = &ThiefProcess::Docs_wait_for_top;
-  }
+  state_ = &ThiefProcess::House_start_waiting_for_partner;
 }
 
 void ThiefProcess::Docs_wait_for_top() {
-  int max_in_room = Get_sizes().Get_number_of_desks() / 2;
-  if (documentation_queue_.Is_in_top(max_in_room, WaitingProcess(entry_timestamp_, Get_rank()))) {
+  int max_in_room = Get_sizes().Get_number_of_desks() / 2 * 2;
+  if (partnership_queue_.Is_in_top(max_in_room, WaitingProcess(entry_timestamp_, Get_rank()))) {
     state_ = &ThiefProcess::Docs_critical_section;
   }
 }
@@ -254,33 +228,9 @@ void ThiefProcess::Docs_critical_section() {
     if (paperwork_end.Has_expired()) {
       LOG_INFO("has finished filling the docs")
       sleep_start_.Reset();
-      state_ = &ThiefProcess::Docs_release;
+      state_ = &ThiefProcess::Partnership_release;
     }
   }
-}
-
-void ThiefProcess::Docs_release() {
-
-  Message msg = Message()
-    .Set(Message::RANK_FIELD, Get_rank());
-  communicator_.Send(current_partner_rank_, msg, Communicator::PARTNER_TAG);
-
-  Increment_timestamp();
-
-  msg = Message()
-    .Set(Message::RANK_FIELD, Get_rank())
-    .Set(Message::TIMESTAMP_FIELD, entry_timestamp_)
-    .Set(Message::QUEUE_FIELD, DOCUMENTATION_Q_ID)
-    .Set(Message::ENTRY_FIELD, entry_timestamp_);
-
-  communicator_.Send_all(msg, Communicator::RELEASE_TAG);
-
-  documentation_queue_.Erase(WaitingProcess(entry_timestamp_, Get_rank()));
-
-  LOG_DEBUG("has started waiting for finishing burglary")
-  communicator_.Irecv(current_partner_rank_,
-    &partner_sync_, Communicator::PARTNER_TAG);
-  state_ = &ThiefProcess::House_wait_for_partner;
 }
 
 void ThiefProcess::Docs_start_waiting_for_partner() {
@@ -338,6 +288,13 @@ void ThiefProcess::House_critical_section() {
       state_ = &ThiefProcess::House_notify_partner;
     }
   }
+}
+
+void ThiefProcess::House_start_waiting_for_partner() {
+  LOG_DEBUG("has started waiting for burglery end");
+  communicator_.Irecv(Communicator::ANY_SOURCE,
+    &partner_sync_, Communicator::PARTNER_TAG);
+  state_ = &ThiefProcess::House_wait_for_partner;
 }
 
 void ThiefProcess::House_wait_for_partner() {
