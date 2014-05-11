@@ -49,6 +49,11 @@ void ThiefProcess::Main_loop() {
 }
 
 void ThiefProcess::Try_communication() {
+  Try_receive_requests();
+  Try_receive_releases();
+}
+
+void ThiefProcess::Try_receive_requests() {
   for (int i=0; i<Get_sizes().Get_number_of_thieves(); i++)  {
     if (i == Get_rank()) continue;
     if (communicator_.Test(i, Communicator::REQUEST_TAG)) {
@@ -75,6 +80,9 @@ void ThiefProcess::Try_communication() {
       communicator_.Irecv(i, &request_[i], Communicator::REQUEST_TAG);
     }
   }
+}
+
+void ThiefProcess::Try_receive_releases() {
   for (int i=0; i<Get_sizes().Get_number_of_thieves(); i++) {
     if (i == Get_rank()) continue;
     if (communicator_.Test(i, Communicator::RELEASE_TAG)) {

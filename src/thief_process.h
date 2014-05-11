@@ -80,6 +80,8 @@ private:
   void Set_up_communication();
   void Main_loop();
   void Try_communication();
+  void Try_receive_requests();
+  void Try_receive_releases();
   void Try_release_resources();
 };
 
