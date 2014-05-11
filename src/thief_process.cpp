@@ -29,6 +29,8 @@ void ThiefProcess::Run() {
     << ", houses = " << Get_sizes().Get_number_of_houses()
     << "]")
 
+  srand(time(NULL) + Get_rank());
+
   Set_up_communication();
   Main_loop();
 }
@@ -195,7 +197,7 @@ void ThiefProcess::Partnership_release() {
 
   communicator_.Send_all(msg, Communicator::RELEASE_TAG);
 
-  partnership_queue_.Erase(
+  partnership_queue_.Erase( 
     partnership_queue_.After(WaitingProcess(entry_timestamp_, Get_rank()))
   );
   partnership_queue_.Erase(
@@ -245,17 +247,16 @@ void ThiefProcess::Docs_wait_for_partner() {
 }
 
 void ThiefProcess::House_request_entry() {
-  srand(time(NULL));
-  const int house_id = rand() % Get_sizes().Get_number_of_desks();
-  if (house_entry_timestamp_[house_id] == -1) {
-    LOG_DEBUG("requests entry to " << house_id << " house")
-    house_entry_timestamp_[house_id] = Increment_timestamp();
+  current_house_id_ = rand() % Get_sizes().Get_number_of_houses();
+  if (house_entry_timestamp_[current_house_id_] == -1) {
+    LOG_DEBUG("requests entry to house (" << current_house_id_ << ")")
+    house_entry_timestamp_[current_house_id_] = Increment_timestamp();
 
     Message msg = Message()
       .Set(Message::RANK_FIELD, Get_rank())
-      .Set(Message::TIMESTAMP_FIELD, house_entry_timestamp_[house_id])
-      .Set(Message::QUEUE_FIELD, HOUSE_Q_ID+house_id)
-      .Set(Message::ENTRY_FIELD, house_entry_timestamp_[house_id]);
+      .Set(Message::TIMESTAMP_FIELD, house_entry_timestamp_[current_house_id_])
+      .Set(Message::QUEUE_FIELD, HOUSE_Q_ID+current_house_id_)
+      .Set(Message::ENTRY_FIELD, house_entry_timestamp_[current_house_id_]);
 
     communicator_.Send_all(msg, Communicator::REQUEST_TAG);
     communicator_.Irecv_all(confirm_, Communicator::CONFIRM_TAG);
@@ -272,7 +273,6 @@ void ThiefProcess::House_wait_for_confirm() {
 }
 
 void ThiefProcess::House_critical_section() {
-  const int house_id = 0;
   if (!sleep_start_.Is_initialized()) {
     sleep_start_ = TimePoint::Now();
     LOG_INFO("has started robbing the house (critical section)")
@@ -281,7 +281,7 @@ void ThiefProcess::House_critical_section() {
     if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
       TimePoint expiration_time = TimePoint::Now() + Duration(HOUSE_QUARANTINE_DURATION);
-      left_houses_queue_.Push(LeftHouse(house_id, expiration_time));
+      left_houses_queue_.Push(LeftHouse(current_house_id_, expiration_time));
       sleep_start_ = TimePoint::Now();
       state_ = &ThiefProcess::House_notify_partner;
     }

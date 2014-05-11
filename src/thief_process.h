@@ -75,6 +75,7 @@ private:
   void House_notify_partner();
 
   int current_partner_rank_;
+  int current_house_id_;
 
   void Set_up_communication();
   void Main_loop();
