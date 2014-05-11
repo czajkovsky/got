@@ -248,7 +248,8 @@ void ThiefProcess::Docs_wait_for_partner() {
 }
 
 void ThiefProcess::House_request_entry() {
-  const int house_id = 0;  // TODO change it
+  srand(time(NULL));
+  const int house_id = rand() % Get_sizes().Get_number_of_desks();
   if (house_entry_timestamp_[house_id] == -1) {
     LOG_DEBUG("requests entry to " << house_id << " house")
     house_entry_timestamp_[house_id] = Increment_timestamp();
