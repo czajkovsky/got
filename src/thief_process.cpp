@@ -55,8 +55,6 @@ void ThiefProcess::Try_communication() {
 
       if (request_[i].Get(Message::QUEUE_FIELD) == PARTNERSHIP_Q_ID) {
         partnership_queue_.Insert(WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)));
-      } else if (request_[i].Get(Message::QUEUE_FIELD) == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Insert(WaitingProcess(request_[i].Get(Message::TIMESTAMP_FIELD), request_[i].Get(Message::RANK_FIELD)));
       } else {
         const int house_id = request_[i].Get(Message::QUEUE_FIELD) - HOUSE_Q_ID;
         if (house_entry_timestamp_[house_id] == -1 ||
@@ -85,10 +83,6 @@ void ThiefProcess::Try_communication() {
           partnership_queue_.After(WaitingProcess(release_[i].Get(Message::ENTRY_FIELD), release_[i].Get(Message::RANK_FIELD)))
         );
         partnership_queue_.Erase(
-          WaitingProcess(release_[i].Get(Message::ENTRY_FIELD), release_[i].Get(Message::RANK_FIELD))
-        );
-      } else if (release_[i].Get(Message::QUEUE_FIELD) == DOCUMENTATION_Q_ID) {
-        documentation_queue_.Erase(
           WaitingProcess(release_[i].Get(Message::ENTRY_FIELD), release_[i].Get(Message::RANK_FIELD))
         );
       }

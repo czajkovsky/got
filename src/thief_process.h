@@ -31,7 +31,6 @@ private:
 
   enum QueueID {
     PARTNERSHIP_Q_ID,
-    DOCUMENTATION_Q_ID,
     HOUSE_Q_ID
   };
 
