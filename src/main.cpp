@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include "thief_process.h"
 #include "sizes.h"
+#include "logger.h"
 
 int main(int argc, char* argv[]) {
   MPI::Init(argc, argv);
@@ -12,6 +13,8 @@ int main(int argc, char* argv[]) {
 
   ThiefProcess process(sizes);
   process.Run();
+
+  LOG_INFO("Finalizing")
 
   MPI::Finalize();
 }

@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "sizes.h"
 #include "time_point.h"
+#include "ender.h"
 
 ThiefProcess::ThiefProcess(Sizes sizes)
   : sleep_start_(TimePoint::Uninitialized()),
@@ -39,7 +40,7 @@ void ThiefProcess::Set_up_communication() {
 }
 
 void ThiefProcess::Main_loop() {
-  while (true) {
+  while (!Ender::Get_ender().End()) {
     Try_communication();
     (this->*state_)();
     Try_release_resources();

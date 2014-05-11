@@ -14,6 +14,7 @@ SRC_DIR = src
 
 MAIN_SRCS = main.cpp
 THIEF_LIB_SRCS =  communicator.cpp \
+									ender.cpp \
 									left_house.cpp \
 									logger.cpp \
 									message.cpp \
