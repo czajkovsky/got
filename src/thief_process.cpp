@@ -234,7 +234,7 @@ void ThiefProcess::Docs_critical_section() {
     sleep_start_ = TimePoint::Now();
     LOG_INFO("has started filling the docs (critical section)")
   } else {
-    TimePoint paperwork_end = sleep_start_ + Duration(PAPERWORK_DURATION);
+    TimePoint paperwork_end = sleep_start_ + PAPERWORK_DURATION;
     if (paperwork_end.Has_expired()) {
       LOG_INFO("has finished filling the docs")
       sleep_start_.Reset();
@@ -291,10 +291,10 @@ void ThiefProcess::House_critical_section() {
     sleep_start_ = TimePoint::Now();
     LOG_INFO("has started robbing the house (critical section)")
   } else {
-    TimePoint burglary_end = sleep_start_ + Duration(BURGLARY_DURATION);
+    TimePoint burglary_end = sleep_start_ + BURGLARY_DURATION;
     if (burglary_end.Has_expired()) {
       LOG_INFO("has finished robbing the house")
-      TimePoint expiration_time = TimePoint::Now() + Duration(HOUSE_QUARANTINE_DURATION);
+      TimePoint expiration_time = TimePoint::Now() + HOUSE_QUARANTINE_DURATION;
       left_houses_queue_.Push(LeftHouse(current_house_id_, expiration_time));
       sleep_start_.Reset();
       state_ = &ThiefProcess::House_notify_partner;
