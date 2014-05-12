@@ -44,6 +44,8 @@ private:
   Message confirm_[Sizes::MAX_NUMBER_OF_THIEVES];
   Message partner_sync_;
 
+  int Find_max_timestamp(Message*, int size);
+
   WaitingProcessPriorityQueue partnership_queue_;
   WaitingProcessPriorityQueue waiting_houses_queue_[Sizes::MAX_NUMBER_OF_HOUSES];
   LeftHouseQueue left_houses_queue_;

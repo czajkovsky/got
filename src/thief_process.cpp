@@ -147,6 +147,9 @@ void ThiefProcess::Partnership_insert() {
 void ThiefProcess::Partnership_wait_for_confirm() {
   bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
   if (confirmed) {
+    const int max_timestamp =
+      Find_max_timestamp(confirm_, Get_sizes().Get_number_of_thieves());
+    Increment_timestamp(max_timestamp);
     state_ = &ThiefProcess::Partnership_wait_for_top;
   }
 }
@@ -276,6 +279,9 @@ void ThiefProcess::House_request_entry() {
 void ThiefProcess::House_wait_for_confirm() {
   bool confirmed = communicator_.Test_all(Communicator::CONFIRM_TAG);
   if (confirmed) {
+    const int max_timestamp =
+      Find_max_timestamp(confirm_, Get_sizes().Get_number_of_thieves());
+    Increment_timestamp(max_timestamp);
     state_ = &ThiefProcess::House_critical_section;
   }
 }
@@ -325,5 +331,14 @@ void ThiefProcess::House_notify_partner() {
 int ThiefProcess::Increment_timestamp(int other_timestamp) {
   timestamp_ = std::max(timestamp_, other_timestamp) + 1;
   return timestamp_;
+}
+
+int ThiefProcess::Find_max_timestamp(Message* msgs, int size) {
+  int max = -1;
+  for (int i=0; i<size; i++) {
+    if (i == Get_rank()) continue;
+    max = std::max(max, msgs[i].Get(Message::TIMESTAMP_FIELD));
+  }
+  return max;
 }
 
