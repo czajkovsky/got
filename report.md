@@ -103,5 +103,23 @@ while (!koniec) {
   + sprawdzaj czy kradzież została zakończona
   + przejdź do stanu <code>Partnership_insert</code>
 
+#### Złożoność komunikacyjna
+Komunikacja pojdeńczego procesu wysyła w czasie jednego cyklu:
+  + proces który wejdzie na kolejkę partnerów jako **nieparzysty**
+    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
+    + odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
+    + odbiór **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
+    + wysłanie **n-1** <code>RELEASE_TAG</code> - zwolnienie miejsca na kolejce patnerów
+    + wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
+    + otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
+  + proces który wejdzie na kolejkę partnerów jako **nieparzysty**
+    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
+    + odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
+    + wysłanie **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
+    + otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
+    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę danego domu
+    + otrzymanie **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę danego domu
+    + wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
+
 #### Wzajemne wykluczanie
 W celu realizacji pierwszej sekcji krytycznej wykorzystany jest algorytm Lamporta, dla drugiej jest to algorytm Ricarta-Agrawalli.
