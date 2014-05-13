@@ -28,5 +28,80 @@ D - liczba domów
 ##### Rabowanie domu
 Po przydzieleniu domu proces o nieparzystej pozycji w porzedniej kolejce ubiega się o dostęp do konkretnego domu - każdy dom to odzielna sekcja krytyczna (<code>D</code> kolejek). W sekcji krytycznej może przebywać tylko jeden proces jako, że dany dom może być rabowany tylko przez jedną parę złodzieji. Po rabunku dany dom jest oznaczony przez pewien czas jako niedostępny.
 
+### Algorytm rozwiązania
+
+#### Założenia przyjętego modelu komunikacji
++ asynchroniczny system z wymianą komunikatów
++ topologia połączeń **każdy z każdym**
+
+
+#### Omówienie algorytmu
+
+##### Główna pętla
+```cpp
+while (!koniec) {
+  komunikacja();
+  konkretny_stan();
+  zwolnienie_zasobów();
+}
+```
+##### Stany
+1. Partnership_insert
+  + broadcast do pozostałych procesów z tagiem <code>REQUEST_TAG</code> (wejście na kolejkę partnerów).
+  + rozpoczęcie nasłuchiwania na zgodę na wejście na ww. kolejkę <code>CONFIRM_TAG</code>
+  + przejście do stanu <code>Partnership_wait_for_confirm</code>
+2. Partnership_wait_for_confirm
+  + sprawdzenie czy przyszła zgoda od wszytkich złodzieji
+  + przejście do stanu <code>Partnership_wait_for_top</code>
+3. Partnership_wait_for_top
+  + synchronizacja
+  + przejście do stanu <code>Partnership_critical_section</code>
+5. Partnership_critical_section
+  + jeśli pozycja w kolejce jest nieparzysta
+    + nasłuchuj na partnera, tag <code>PARTNER_TAG</code> 
+    + przejdź do stanu <code>Partnership_wait_for_partner</code>
+  + jeśli pozycja w kolejce jest parzysta
+    + zapisz id złodzieja poprzedzającego w kolejce
+    + przejdź do stanu <code>Partnership_notify_partner</code>
+6. Partnership_wait_for_partner
+  + sprawdzaj aż nie przyjdzie wiadomość od partnera
+  + przejdź do stanu <code>Docs_wait_for_top</code>
+7. Partnership_notify_partner
+  + powiadom partnera: tag <code>PARTNER_TAG</code>
+  + przejdź do stanu <code>Docs_start_waiting_for_partner</code>
+8. Docs_wait_for_top
+  + oczekuj na wejście do sekcji krytycznej
+  + przejdź do stanu <code>Docs_critical_section</code>
+9. Docs_critical_section
+  + po upływie czasu potrzebnego na wypełnienie dokumentów przejdź do stanu <code>Partnership_release</code>
+10. Partnership_release
+  + wyślij do pozostałych złodzieji informację o zwolnieniu pozycji w kolejce: tag <code>RELEASE_TAG</code>
+  + poinformuj partnera, że papierkowa robota jest zakończona, tag <code>PARTNER_TAG</code>
+  + przejdź do stanu <code>House_start_waiting_for_partner</code>
+11. Docs_start_waiting_for_partner
+  + rozpocznij oczekiwanie na partnera, tag <code>PARTNER_TAG</code>
+  + przejdź do stanu <code>Docs_wait_for_partner</code>
+12. Docs_wait_for_partner
+  + w momencie otrzymania potwierdzenia od partnera (<code>PARTNER_TAG</code>) przejdź do stanu <code>House_request_entry</code>
+13. House_request_entry
+  + wyślij do wszystkich złodzieji informację o chęci wejścia do danego domu, tag: <code>REQUEST_TAG</code>
+  + rozpocznij oczekiwanie na potwierdzenie ww. wiadomości (<code>CONFIRM_TAG</code>)
+  + przejdź do stanu <code>House_wait_for_confirm</code>
+14. House_wait_for_confirm
+  + w momencie otrzymania potwierdzenia wejdź do sekcji krytycznej danego domu - przejdź do stanu <code>House_critical_section</code>
+15. House_critical_section
+  + zrabuj dom (oczekuj aż minie określony czas)
+  + dodaj dom na kolejkę zasobów do zwolnienia (z określonym czasem wygaśnięcia - <code>HOUSE_QUARANTINE_DURATION</code>)
+  + przejdź do stanu <code>House_notify_partner</code>
+16. House_notify_partner
+  + poinformuj partnera że, kradzież została zakończona (<code>PARTNER_TAG</code>)
+  + przejdź do stanu <code>Partnership_insert</code>
+17. House_start_waiting_for_partner
+  + rozpocznij nasłuchiwanie na wiadomość o zakończeniu kradzieży (<code>PARTNER_TAG</code>)
+  + przejdź do stanu <code>House_wait_for_partner</code>
+18. House_wait_for_partner
+  + sprawdzaj czy kradzież została zakończona
+  + przejdź do stanu <code>Partnership_insert</code>
+
 #### Wzajemne wykluczanie
 W celu realizacji pierwszej sekcji krytycznej wykorzystany jest algorytm Lamporta, dla drugiej jest to algorytm Ricarta-Agrawalli.
