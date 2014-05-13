@@ -33,6 +33,7 @@ Po przydzieleniu domu proces o nieparzystej pozycji w porzedniej kolejce ubiega 
 #### Założenia przyjętego modelu komunikacji
 + asynchroniczny system z wymianą komunikatów
 + topologia połączeń **każdy z każdym**
++ kanały komunikacyjne typu FIFO
 
 
 #### Omówienie algorytmu
