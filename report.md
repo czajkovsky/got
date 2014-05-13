@@ -7,7 +7,7 @@
 ### Algorytm
 
 Dla każdego procesu złodzieja możemy wyodrębnić 3 następujące po sobie czynności:
-+ dobór złodzieji w pary
++ dobór złodziei w pary
 + papierkowa robota (przydzielenie domu)
 + rabunek domu arystokracji
 
@@ -42,16 +42,16 @@ Po przydzieleniu domu proces o nieparzystej pozycji w porzedniej kolejce ubiega 
 while (!koniec) {
   komunikacja();
   konkretny_stan();
-  zwolnienie_zasobów();
+  zwolnienie_zasobow();
 }
 ```
 ##### Stany
 1. Partnership_insert
-  + broadcast do pozostałych procesów z tagiem <code>REQUEST_TAG</code> (wejście na kolejkę partnerów).
+  + broadcast do pozostałych procesów z tagiem <code>REQUEST_TAG</code> (chęć wejście na kolejkę partnerów).
   + rozpoczęcie nasłuchiwania na zgodę na wejście na ww. kolejkę <code>CONFIRM_TAG</code>
   + przejście do stanu <code>Partnership_wait_for_confirm</code>
 2. Partnership_wait_for_confirm
-  + sprawdzenie czy przyszła zgoda od wszytkich złodzieji
+  + sprawdzenie czy przyszła zgoda od wszytkich złodziei
   + przejście do stanu <code>Partnership_wait_for_top</code>
 3. Partnership_wait_for_top
   + synchronizacja
@@ -75,7 +75,7 @@ while (!koniec) {
 9. Docs_critical_section
   + po upływie czasu potrzebnego na wypełnienie dokumentów przejdź do stanu <code>Partnership_release</code>
 10. Partnership_release
-  + wyślij do pozostałych złodzieji informację o zwolnieniu pozycji w kolejce: tag <code>RELEASE_TAG</code>
+  + wyślij do pozostałych złodziei informację o zwolnieniu pozycji w kolejce: tag <code>RELEASE_TAG</code>
   + poinformuj partnera, że papierkowa robota jest zakończona, tag <code>PARTNER_TAG</code>
   + przejdź do stanu <code>House_start_waiting_for_partner</code>
 11. Docs_start_waiting_for_partner
@@ -84,7 +84,7 @@ while (!koniec) {
 12. Docs_wait_for_partner
   + w momencie otrzymania potwierdzenia od partnera (<code>PARTNER_TAG</code>) przejdź do stanu <code>House_request_entry</code>
 13. House_request_entry
-  + wyślij do wszystkich złodzieji informację o chęci wejścia do danego domu, tag: <code>REQUEST_TAG</code>
+  + wyślij do wszystkich złodziei informację o chęci wejścia do danego domu, tag: <code>REQUEST_TAG</code>
   + rozpocznij oczekiwanie na potwierdzenie ww. wiadomości (<code>CONFIRM_TAG</code>)
   + przejdź do stanu <code>House_wait_for_confirm</code>
 14. House_wait_for_confirm
