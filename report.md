@@ -127,3 +127,6 @@ Dla procesu który wejdzie na kolejkę partnerów jako **parzysty** otrzymujemy 
 
 #### Wzajemne wykluczanie
 W celu realizacji pierwszej sekcji krytycznej wykorzystany jest algorytm Lamporta, dla drugiej jest to algorytm Ricarta-Agrawalli.
+
+### Wnioski
+Dzięki wprowadzonym modyfikacją w stosunku do pierwotnej wersji (połączenie kolejek do doboru partnerów i dokumentacji) udało się znacznie ograniczyć liczbę komunikacji.
