@@ -122,6 +122,9 @@ Komunikacja pojdeńczego procesu wysyła w czasie jednego cyklu:
     + otrzymanie **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę danego domu
     + wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
 
+#### Złożoność czasowa
+Dla proces który wejdzie na kolejkę partnerów jako **nieparzysty** złożoność czasowa wynosi **6**, natomiast dla dla procesu który wejdzie jako **parzysty** złożoność czasowa wynosi **7**.
+
 Łącznie dla procesu który wejdzie na kolejkę partnerów jako **nieparzysty** otrzymujemy <code>3 * (n-1) + 3 = 3n</code> komunikacji.
 
 Dla procesu który wejdzie na kolejkę partnerów jako **parzysty** otrzymujemy <code>4 * (n-1) + 3 = 4n - 1</code> komunijacji.
