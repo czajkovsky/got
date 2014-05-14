@@ -106,21 +106,24 @@ while (!koniec) {
 
 #### Złożoność komunikacyjna
 Komunikacja pojdeńczego procesu wysyła w czasie jednego cyklu:
-  + proces który wejdzie na kolejkę partnerów jako **nieparzysty**
-    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
-    + odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
-    + odbiór **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
-    + wysłanie **n-1** <code>RELEASE_TAG</code> - zwolnienie miejsca na kolejce patnerów
-    + wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
-    + otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
-  + proces który wejdzie na kolejkę partnerów jako **nieparzysty**
-    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
-    + odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
-    + wysłanie **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
-    + otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
-    + wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę danego domu
-    + otrzymanie **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę danego domu
-    + wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
+
+##### Proces który wejdzie na kolejkę partnerów jako **nieparzysty**
+1. wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
+2. odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
+3. odbiór **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
+4. wysłanie **n-1** <code>RELEASE_TAG</code> - zwolnienie miejsca na kolejce patnerów
+5. wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
+6. otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
+
+##### Proces który wejdzie na kolejkę partnerów jako **nieparzysty**
+
+1. wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę partnerów
+2. odbiór **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę partnerów
+3. wysłanie **1** <code>PARTNER_TAG</code> - potwierdzenie przydzielenia patnera
+4. otrzymanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu wypełniania dokumentów
+5. wysłanie **n-1** <code>REQUEST_TAG</code> - wejście na kolejkę danego domu
+6. otrzymanie **n-1** <code>CONFIRM_TAG</code> - zgoda na wejście na kolejkę danego domu
+7. wysłanie **1** <code>PARTNER_TAG</code> - informacja o zakończeniu kradzieży
 
 Łącznie dla procesu który wejdzie na kolejkę partnerów jako **nieparzysty** otrzymujemy <code>3 * (n-1) + 3 = 3n</code> komunikacji.
 
